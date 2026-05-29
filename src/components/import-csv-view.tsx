@@ -3,12 +3,24 @@
 import React, { useState, useRef } from "react";
 import { useFinance, Transaction } from "@/context/finance-context";
 import Papa from "papaparse";
-import { UploadCloud, CheckCircle, FileSpreadsheet, AlertTriangle, ArrowRight } from "lucide-react";
-import { motion } from "framer-motion";
+import { 
+  Upload, 
+  Check, 
+  FileSpreadsheet, 
+  AlertTriangle, 
+  ArrowRight, 
+  Landmark, 
+  FileText, 
+  ChevronLeft, 
+  HelpCircle 
+} from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
 
 export default function ImportCsvView() {
   const { importTransactions, setActiveTab } = useFinance();
   
+  // Wizard States
+  const [selectedSource, setSelectedSource] = useState<Transaction["bank"]>("GTBANK");
   const [file, setFile] = useState<File | null>(null);
   const [parsedHeaders, setParsedHeaders] = useState<string[]>([]);
   const [parsedData, setParsedData] = useState<Record<string, any>[]>([]);
@@ -24,7 +36,15 @@ export default function ImportCsvView() {
 
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // File Upload Handlers
+  const sources: { id: Transaction["bank"]; name: string; color: string }[] = [
+    { id: "GTBANK", name: "GTBank", color: "bg-[#ff5722]" },
+    { id: "OPAY", name: "Opay", color: "bg-[#00bfa5]" },
+    { id: "PALMPAY", name: "PalmPay", color: "bg-[#a855f7]" },
+    { id: "KUDA", name: "Kuda", color: "bg-[#d500f9]" },
+    { id: "MONIEPOINT", name: "Moniepoint", color: "bg-[#0284c7]" },
+  ];
+
+  // Drag & Drop Handlers
   const handleDragOver = (e: React.DragEvent) => {
     e.preventDefault();
   };
@@ -58,19 +78,21 @@ export default function ImportCsvView() {
           setParsedHeaders(headers);
           setParsedData(results.data as any[]);
           
-          // Auto-map common headers
+          // Auto-map headers
           autoMapHeaders(headers);
         } else {
           alert("CSV file seems to be empty.");
+          setFile(null);
         }
       },
       error: (error) => {
         alert("Failed to parse CSV: " + error.message);
+        setFile(null);
       }
     });
   };
 
-  // Helper to automap based on common name matches
+  // Auto-mapping logic
   const autoMapHeaders = (headers: string[]) => {
     const findHeader = (aliases: string[]) => {
       return headers.find(h => aliases.some(alias => h.toLowerCase().includes(alias.toLowerCase()))) || "";
@@ -85,31 +107,17 @@ export default function ImportCsvView() {
     setTypeCol(findHeader(["type", "flow", "direction"]));
   };
 
-  // Trigger file selection window
   const triggerFileSelect = () => {
     fileInputRef.current?.click();
   };
 
-  // Build and download a template CSV file
-  const downloadTemplate = () => {
-    const csvContent = 
-      "date,title,subtitle,category,bank,type,amount\n" +
-      "2026-05-28T09:00:00,Mega Grocery,Groceries Mall Shop,Groceries,KUDA,expense,15000\n" +
-      "2026-05-27T14:30:00,Contract Billing,Freelance Web Dev,Income,GTBANK,income,250000\n" +
-      "2026-05-26T21:40:00,Uber Ride,Uber trip lagos,Transport,PALMPAY,expense,3500\n" +
-      "2026-05-25T11:00:00,Buka Restaurant,Amala Spot Lekki,Food & Dining,OPAY,expense,8000\n";
-
-    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement("a");
-    link.setAttribute("href", url);
-    link.setAttribute("download", "kolo_sample_statement.csv");
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
+  const handleBackToStep1 = () => {
+    setFile(null);
+    setParsedHeaders([]);
+    setParsedData([]);
   };
 
-  // Ingest parsed rows
+  // Import parsed data to context
   const handleImport = () => {
     if (!titleCol || !amountCol) {
       alert("Please map at least Title/Vendor and Amount columns.");
@@ -119,7 +127,7 @@ export default function ImportCsvView() {
     const mappedTransactions: Omit<Transaction, "id">[] = parsedData.map((row) => {
       const amountVal = Math.abs(Number(row[amountCol]?.toString().replace(/[^\d.]/g, "")) || 0);
       
-      // Determine flow
+      // Determine direction flow
       let typeVal: "income" | "expense" = "expense";
       if (typeCol && row[typeCol]) {
         const tStr = row[typeCol].toLowerCase();
@@ -130,12 +138,16 @@ export default function ImportCsvView() {
         typeVal = "income";
       }
 
-      // Bank normalize
-      let bankVal: Transaction["bank"] = "GTBANK";
-      const bStr = (row[bankCol] || "").toUpperCase();
-      if (bStr.includes("KUDA")) bankVal = "KUDA";
-      else if (bStr.includes("OPAY")) bankVal = "OPAY";
-      else if (bStr.includes("PALM")) bankVal = "PALMPAY";
+      // Bank normalize: Use column value if mapped, otherwise use the selected bank source from Step 1
+      let bankVal: Transaction["bank"] = selectedSource;
+      if (bankCol && row[bankCol]) {
+        const bStr = row[bankCol].toUpperCase();
+        if (bStr.includes("KUDA")) bankVal = "KUDA";
+        else if (bStr.includes("OPAY")) bankVal = "OPAY";
+        else if (bStr.includes("PALM")) bankVal = "PALMPAY";
+        else if (bStr.includes("MONIE")) bankVal = "MONIEPOINT";
+        else if (bStr.includes("GTB")) bankVal = "GTBANK";
+      }
 
       // Date normalize
       let dateVal = new Date().toISOString();
@@ -160,241 +172,319 @@ export default function ImportCsvView() {
     });
 
     importTransactions(mappedTransactions);
-    setActiveTab("dashboard");
+    setActiveTab("transactions");
   };
 
   return (
-    <div className="px-6 py-6 md:px-10 space-y-6">
-      <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
-        {/* Upload Column */}
-        <div className="lg:col-span-1 space-y-4">
-          <div className="rounded-2xl bg-white border border-slate-100 p-6 shadow-sm">
-            <h2 className="text-sm font-extrabold text-slate-900 mb-2">Upload CSV Statement</h2>
-            <p className="text-xs text-slate-400 mb-6">Import transactions from your bank statements or personal sheets.</p>
+    <div className="px-6 py-6 md:px-10 max-w-6xl mx-auto space-y-6">
+      
+      {/* Invisible File Input */}
+      <input
+        type="file"
+        ref={fileInputRef}
+        onChange={handleFileChange}
+        accept=".csv"
+        className="hidden"
+      />
 
-            {/* Drag & Drop Frame */}
+      <AnimatePresence mode="wait">
+        {!file ? (
+          /* ================= STEP 1 OF 2 ================= */
+          <motion.div
+            key="step1"
+            initial={{ opacity: 0, y: 15 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -15 }}
+            transition={{ duration: 0.2 }}
+            className="space-y-6"
+          >
+            {/* Header Text */}
+            <div className="space-y-1">
+              <span className="text-xs font-black text-slate-400">Step 1 of 2</span>
+              <h2 className="text-3xl font-black tracking-tight text-slate-950">Import a statement</h2>
+              <p className="text-sm font-semibold text-slate-500 max-w-2xl leading-relaxed">
+                Download a CSV statement from your bank or wallet app and drop it in. Kolo will categorise everything automatically.
+              </p>
+            </div>
+
+            {/* Choose Source Selector */}
+            <div className="space-y-3">
+              <span className="block text-[11px] font-black text-slate-900 uppercase tracking-wider">Choose source</span>
+              
+              <div className="grid grid-cols-2 sm:grid-cols-5 gap-3.5">
+                {sources.map((source) => {
+                  const isSelected = selectedSource === source.id;
+                  return (
+                    <div
+                      key={source.id}
+                      onClick={() => setSelectedSource(source.id)}
+                      className={`relative flex flex-col justify-between p-5 rounded-2xl border bg-white cursor-pointer transition-all h-28 ${
+                        isSelected
+                          ? "border-slate-950 border-1.5 shadow-sm ring-1 ring-slate-950/5"
+                          : "border-slate-200 hover:border-slate-350 hover:bg-slate-50/20"
+                      }`}
+                    >
+                      {/* Logo badge circular */}
+                      <div className={`flex h-9 w-9 items-center justify-center rounded-full text-white shrink-0 ${source.color}`}>
+                        <Landmark className="h-4.5 w-4.5" />
+                      </div>
+
+                      {/* Name tag */}
+                      <span className="text-xs font-extrabold text-slate-900 mt-auto">{source.name}</span>
+
+                      {/* Selected green checkmark */}
+                      {isSelected && (
+                        <div className="absolute top-3.5 right-3.5 flex h-4.5 w-4.5 items-center justify-center rounded-full border-1.5 border-emerald-500 bg-white text-emerald-500 shadow-sm">
+                          <Check className="h-2.5 w-2.5 stroke-[3.5]" />
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* Drop Zone Box */}
             <div
               onDragOver={handleDragOver}
               onDrop={handleDrop}
               onClick={triggerFileSelect}
-              className={`flex flex-col items-center justify-center border-2 border-dashed rounded-2xl p-8 text-center cursor-pointer transition-colors min-h-[200px] ${
-                file ? "border-kolo-green/50 bg-kolo-green/5" : "border-slate-200 hover:border-slate-300 bg-slate-50/50"
-              }`}
+              className="border-2 border-dashed border-slate-200 hover:border-slate-350 bg-slate-50/25 hover:bg-slate-50/50 rounded-3xl p-10 flex flex-col items-center justify-center min-h-[280px] cursor-pointer transition-all"
             >
-              <input
-                type="file"
-                ref={fileInputRef}
-                onChange={handleFileChange}
-                accept=".csv"
-                className="hidden"
-              />
-              {file ? (
-                <>
-                  <div className="rounded-full bg-kolo-green/10 p-3 text-kolo-green mb-3">
-                    <FileSpreadsheet size={32} />
-                  </div>
-                  <span className="text-xs font-bold text-slate-800 truncate max-w-full block">{file.name}</span>
-                  <span className="text-[10px] text-slate-400 mt-1">{(file.size / 1024).toFixed(1)} KB · Click to change</span>
-                </>
-              ) : (
-                <>
-                  <div className="rounded-full bg-slate-100 p-3 text-slate-400 mb-3">
-                    <UploadCloud size={32} />
-                  </div>
-                  <span className="text-xs font-bold text-slate-800">Drag & drop CSV file here</span>
-                  <span className="text-[10px] text-slate-400 mt-1">or click to browse from device</span>
-                </>
-              )}
-            </div>
+              {/* Green Rounded Square Upload Icon */}
+              <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-kolo-green text-kolo-dark shadow-sm">
+                <Upload className="h-6 w-6 stroke-[3]" />
+              </div>
 
-            {/* Actions */}
-            <div className="mt-6 flex flex-col gap-2.5">
+              {/* Text indicators */}
+              <span className="text-sm font-extrabold text-slate-900 mt-5">
+                Drop your {sources.find(s => s.id === selectedSource)?.name} CSV here
+              </span>
+              <span className="text-xs text-slate-400 font-semibold mt-1">
+                or click to browse · max 10MB
+              </span>
+
+              {/* Choose File Button */}
               <button
-                onClick={downloadTemplate}
-                className="w-full text-center text-xs font-bold text-slate-500 hover:text-slate-800 transition-colors py-2 rounded-lg border border-slate-100 bg-slate-55/10"
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  triggerFileSelect();
+                }}
+                className="bg-slate-950 hover:bg-slate-800 text-white rounded-full px-5 py-2.5 text-xs font-black mt-5 flex items-center gap-2 active:scale-95 transition-all shadow-sm cursor-pointer"
               >
-                Download Test Template CSV
+                <FileText className="h-3.5 w-3.5" />
+                <span>Choose file</span>
               </button>
             </div>
-          </div>
 
-          {/* Mapping settings card */}
-          {file && parsedHeaders.length > 0 && (
-            <motion.div
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              className="rounded-2xl bg-white border border-slate-100 p-6 shadow-sm space-y-4"
+            {/* Expected Columns banner info */}
+            <div className="rounded-3xl bg-slate-50 border border-slate-100 p-5 flex flex-col gap-1">
+              <span className="text-xs font-bold text-slate-950">Expected columns</span>
+              <p className="text-xs text-slate-500 font-semibold leading-relaxed">
+                date, narration, amount, type — Kolo auto-maps common bank formats including GTBank, Kuda and Moniepoint.
+              </p>
+            </div>
+          </motion.div>
+        ) : (
+          /* ================= STEP 2 OF 2 ================= */
+          <motion.div
+            key="step2"
+            initial={{ opacity: 0, y: 15 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -15 }}
+            transition={{ duration: 0.2 }}
+            className="space-y-6"
+          >
+            {/* Back to Step 1 Button */}
+            <button
+              onClick={handleBackToStep1}
+              className="flex items-center gap-1 text-xs text-slate-550 font-bold hover:text-slate-850 transition-colors cursor-pointer"
             >
-              <h2 className="text-sm font-extrabold text-slate-900 mb-3">Map CSV Columns</h2>
+              <ChevronLeft size={16} />
+              <span>Back to upload</span>
+            </button>
 
-              <div className="space-y-3 text-xs font-semibold text-slate-600">
-                {/* Title */}
-                <div className="space-y-1">
-                  <label className="block text-[10px] text-slate-400">Title / Vendor (Required)</label>
-                  <select
-                    value={titleCol}
-                    onChange={(e) => setTitleCol(e.target.value)}
-                    className="w-full rounded-xl border border-slate-200 px-3 py-2 outline-none bg-white font-bold text-slate-700"
-                  >
-                    <option value="">-- Select Column --</option>
-                    {parsedHeaders.map((h) => (
-                      <option key={h} value={h}>{h}</option>
-                    ))}
-                  </select>
+            {/* Header Text */}
+            <div className="space-y-1">
+              <span className="text-xs font-black text-slate-400">Step 2 of 2</span>
+              <h2 className="text-3xl font-black tracking-tight text-slate-950">Map columns & import</h2>
+              <p className="text-sm font-semibold text-slate-500 max-w-2xl leading-relaxed">
+                Map your CSV columns to the appropriate fields. Kolo will process and import these transactions.
+              </p>
+            </div>
+
+            {/* Main Columns Container */}
+            <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
+              {/* Mapping Dropdowns Panel */}
+              <div className="lg:col-span-1 rounded-3xl bg-white border border-slate-100 p-6 shadow-sm space-y-4 h-fit">
+                <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+                  <h3 className="text-xs font-black text-slate-900 uppercase tracking-wider">Field Mapping</h3>
+                  <span className="text-[10px] bg-slate-100 rounded-full px-2 py-0.5 text-slate-650 font-bold">
+                    File: {file.name.slice(0, 15)}...
+                  </span>
                 </div>
 
-                {/* Amount */}
-                <div className="space-y-1">
-                  <label className="block text-[10px] text-slate-400">Amount (Required)</label>
-                  <select
-                    value={amountCol}
-                    onChange={(e) => setAmountCol(e.target.value)}
-                    className="w-full rounded-xl border border-slate-200 px-3 py-2 outline-none bg-white font-bold text-slate-700"
-                  >
-                    <option value="">-- Select Column --</option>
-                    {parsedHeaders.map((h) => (
-                      <option key={h} value={h}>{h}</option>
-                    ))}
-                  </select>
-                </div>
-
-                {/* Subtitle */}
-                <div className="space-y-1">
-                  <label className="block text-[10px] text-slate-400">Description / Subtitle</label>
-                  <select
-                    value={subtitleCol}
-                    onChange={(e) => setSubtitleCol(e.target.value)}
-                    className="w-full rounded-xl border border-slate-200 px-3 py-2 outline-none bg-white font-bold text-slate-700"
-                  >
-                    <option value="">-- Select Column (Optional) --</option>
-                    {parsedHeaders.map((h) => (
-                      <option key={h} value={h}>{h}</option>
-                    ))}
-                  </select>
-                </div>
-
-                {/* Category */}
-                <div className="space-y-1">
-                  <label className="block text-[10px] text-slate-400">Category</label>
-                  <select
-                    value={categoryCol}
-                    onChange={(e) => setCategoryCol(e.target.value)}
-                    className="w-full rounded-xl border border-slate-200 px-3 py-2 outline-none bg-white font-bold text-slate-700"
-                  >
-                    <option value="">-- Select Column (Optional) --</option>
-                    {parsedHeaders.map((h) => (
-                      <option key={h} value={h}>{h}</option>
-                    ))}
-                  </select>
-                </div>
-
-                {/* Bank */}
-                <div className="space-y-1">
-                  <label className="block text-[10px] text-slate-400">Bank Partner</label>
-                  <select
-                    value={bankCol}
-                    onChange={(e) => setBankCol(e.target.value)}
-                    className="w-full rounded-xl border border-slate-200 px-3 py-2 outline-none bg-white font-bold text-slate-700"
-                  >
-                    <option value="">-- Select Column (Optional) --</option>
-                    {parsedHeaders.map((h) => (
-                      <option key={h} value={h}>{h}</option>
-                    ))}
-                  </select>
-                </div>
-
-                {/* Date */}
-                <div className="space-y-1">
-                  <label className="block text-[10px] text-slate-400">Transaction Date</label>
-                  <select
-                    value={dateCol}
-                    onChange={(e) => setDateCol(e.target.value)}
-                    className="w-full rounded-xl border border-slate-200 px-3 py-2 outline-none bg-white font-bold text-slate-700"
-                  >
-                    <option value="">-- Select Column (Optional) --</option>
-                    {parsedHeaders.map((h) => (
-                      <option key={h} value={h}>{h}</option>
-                    ))}
-                  </select>
-                </div>
-
-                {/* Flow Type */}
-                <div className="space-y-1">
-                  <label className="block text-[10px] text-slate-400">Flow Direction (Income/Expense)</label>
-                  <select
-                    value={typeCol}
-                    onChange={(e) => setTypeCol(e.target.value)}
-                    className="w-full rounded-xl border border-slate-200 px-3 py-2 outline-none bg-white font-bold text-slate-700"
-                  >
-                    <option value="">-- Select Column (Optional) --</option>
-                    {parsedHeaders.map((h) => (
-                      <option key={h} value={h}>{h}</option>
-                    ))}
-                  </select>
-                </div>
-
-                <button
-                  onClick={handleImport}
-                  disabled={!titleCol || !amountCol}
-                  className={`w-full flex items-center justify-center gap-1.5 rounded-xl py-3 text-center text-xs font-bold transition-all mt-4 cursor-pointer active:scale-95 ${
-                    titleCol && amountCol
-                      ? "bg-slate-900 text-white hover:bg-slate-800"
-                      : "bg-slate-100 text-slate-400 cursor-not-allowed"
-                  }`}
-                >
-                  <span>Import {parsedData.length} records</span>
-                  <ArrowRight size={14} />
-                </button>
-              </div>
-            </motion.div>
-          )}
-        </div>
-
-        {/* Data Preview Column */}
-        <div className="lg:col-span-2">
-          <div className="rounded-2xl bg-white border border-slate-100 p-6 shadow-sm h-full flex flex-col">
-            <h2 className="text-sm font-extrabold text-slate-900 mb-2">Statement Data Preview</h2>
-            <p className="text-xs text-slate-400 mb-5">Preview parsed row data contents from the CSV file.</p>
-
-            <div className="flex-1 overflow-auto border border-slate-100 rounded-xl max-h-[500px]">
-              {parsedData.length === 0 ? (
-                <div className="h-full flex flex-col items-center justify-center text-center p-8 text-slate-400">
-                  <FileSpreadsheet size={40} className="stroke-1 mb-2.5 text-slate-300" />
-                  <span className="text-xs">No statement loaded yet. Please select or drag a CSV.</span>
-                </div>
-              ) : (
-                <table className="w-full text-left border-collapse text-[11px] text-slate-600">
-                  <thead>
-                    <tr className="border-b border-slate-100 bg-slate-50 font-bold uppercase tracking-wider text-slate-400 sticky top-0">
+                <div className="space-y-3.5 text-xs font-semibold text-slate-650">
+                  {/* Title */}
+                  <div className="space-y-1">
+                    <label className="block text-[10px] text-slate-400 font-bold">Title / Vendor (Required)</label>
+                    <select
+                      value={titleCol}
+                      onChange={(e) => setTitleCol(e.target.value)}
+                      className="w-full rounded-xl border border-slate-200 px-3.5 py-2.5 outline-none bg-white font-bold text-slate-700 focus:border-slate-400 cursor-pointer"
+                    >
+                      <option value="">-- Select Column --</option>
                       {parsedHeaders.map((h) => (
-                        <th key={h} className="px-4 py-3 whitespace-nowrap">{h}</th>
+                        <option key={h} value={h}>{h}</option>
                       ))}
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-slate-100">
-                    {parsedData.slice(0, 15).map((row, i) => (
-                      <tr key={i} className="hover:bg-slate-55/10 transition-colors">
+                    </select>
+                  </div>
+
+                  {/* Amount */}
+                  <div className="space-y-1">
+                    <label className="block text-[10px] text-slate-400 font-bold">Amount (Required)</label>
+                    <select
+                      value={amountCol}
+                      onChange={(e) => setAmountCol(e.target.value)}
+                      className="w-full rounded-xl border border-slate-200 px-3.5 py-2.5 outline-none bg-white font-bold text-slate-700 focus:border-slate-400 cursor-pointer"
+                    >
+                      <option value="">-- Select Column --</option>
+                      {parsedHeaders.map((h) => (
+                        <option key={h} value={h}>{h}</option>
+                      ))}
+                    </select>
+                  </div>
+
+                  {/* Subtitle */}
+                  <div className="space-y-1">
+                    <label className="block text-[10px] text-slate-400 font-bold">Description / Subtitle</label>
+                    <select
+                      value={subtitleCol}
+                      onChange={(e) => setSubtitleCol(e.target.value)}
+                      className="w-full rounded-xl border border-slate-200 px-3.5 py-2.5 outline-none bg-white font-bold text-slate-700 focus:border-slate-400 cursor-pointer"
+                    >
+                      <option value="">-- Select Column (Optional) --</option>
+                      {parsedHeaders.map((h) => (
+                        <option key={h} value={h}>{h}</option>
+                      ))}
+                    </select>
+                  </div>
+
+                  {/* Category */}
+                  <div className="space-y-1">
+                    <label className="block text-[10px] text-slate-400 font-bold">Category</label>
+                    <select
+                      value={categoryCol}
+                      onChange={(e) => setCategoryCol(e.target.value)}
+                      className="w-full rounded-xl border border-slate-200 px-3.5 py-2.5 outline-none bg-white font-bold text-slate-700 focus:border-slate-400 cursor-pointer"
+                    >
+                      <option value="">-- Select Column (Optional) --</option>
+                      {parsedHeaders.map((h) => (
+                        <option key={h} value={h}>{h}</option>
+                      ))}
+                    </select>
+                  </div>
+
+                  {/* Bank */}
+                  <div className="space-y-1">
+                    <label className="block text-[10px] text-slate-400 font-bold">Bank Partner</label>
+                    <select
+                      value={bankCol}
+                      onChange={(e) => setBankCol(e.target.value)}
+                      className="w-full rounded-xl border border-slate-200 px-3.5 py-2.5 outline-none bg-white font-bold text-slate-700 focus:border-slate-400 cursor-pointer"
+                    >
+                      <option value="">-- Select Column (Optional) --</option>
+                      {parsedHeaders.map((h) => (
+                        <option key={h} value={h}>{h}</option>
+                      ))}
+                    </select>
+                  </div>
+
+                  {/* Date */}
+                  <div className="space-y-1">
+                    <label className="block text-[10px] text-slate-400 font-bold">Transaction Date</label>
+                    <select
+                      value={dateCol}
+                      onChange={(e) => setDateCol(e.target.value)}
+                      className="w-full rounded-xl border border-slate-200 px-3.5 py-2.5 outline-none bg-white font-bold text-slate-700 focus:border-slate-400 cursor-pointer"
+                    >
+                      <option value="">-- Select Column (Optional) --</option>
+                      {parsedHeaders.map((h) => (
+                        <option key={h} value={h}>{h}</option>
+                      ))}
+                    </select>
+                  </div>
+
+                  {/* Flow Type */}
+                  <div className="space-y-1">
+                    <label className="block text-[10px] text-slate-400 font-bold">Flow Direction (Income/Expense)</label>
+                    <select
+                      value={typeCol}
+                      onChange={(e) => setTypeCol(e.target.value)}
+                      className="w-full rounded-xl border border-slate-200 px-3.5 py-2.5 outline-none bg-white font-bold text-slate-700 focus:border-slate-400 cursor-pointer"
+                    >
+                      <option value="">-- Select Column (Optional) --</option>
+                      {parsedHeaders.map((h) => (
+                        <option key={h} value={h}>{h}</option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <button
+                    onClick={handleImport}
+                    disabled={!titleCol || !amountCol}
+                    className={`w-full flex items-center justify-center gap-1.5 rounded-xl py-3.5 text-center text-xs font-black transition-all mt-4 cursor-pointer active:scale-95 ${
+                      titleCol && amountCol
+                        ? "bg-slate-950 text-white hover:bg-slate-800 shadow-sm"
+                        : "bg-slate-100 text-slate-400 cursor-not-allowed"
+                    }`}
+                  >
+                    <span>Import {parsedData.length} records</span>
+                    <ArrowRight size={14} className="stroke-[3]" />
+                  </button>
+                </div>
+              </div>
+
+              {/* Data Preview Table Panel */}
+              <div className="lg:col-span-2 rounded-3xl bg-white border border-slate-100 p-6 shadow-sm flex flex-col h-[560px]">
+                <h3 className="text-xs font-black text-slate-900 uppercase tracking-wider mb-2">Statement Data Preview</h3>
+                <p className="text-xs text-slate-400 font-semibold mb-5">Preview parsed row data contents from the CSV file.</p>
+
+                <div className="flex-1 overflow-auto border border-slate-100 rounded-2xl">
+                  <table className="w-full text-left border-collapse text-[11px] text-slate-650">
+                    <thead>
+                      <tr className="border-b border-slate-100 bg-slate-50 font-bold uppercase tracking-wider text-slate-400 sticky top-0">
                         {parsedHeaders.map((h) => (
-                          <td key={h} className="px-4 py-2.5 whitespace-nowrap truncate max-w-[150px]" title={row[h]}>
-                            {row[h]}
-                          </td>
+                          <th key={h} className="px-4 py-3 whitespace-nowrap">{h}</th>
                         ))}
                       </tr>
-                    ))}
-                    {parsedData.length > 15 && (
-                      <tr>
-                        <td colSpan={parsedHeaders.length} className="px-4 py-2 text-center text-slate-400 bg-slate-50/50 italic">
-                          Showing first 15 of {parsedData.length} records.
-                        </td>
-                      </tr>
-                    )}
-                  </tbody>
-                </table>
-              )}
+                    </thead>
+                    <tbody className="divide-y divide-slate-100 font-medium">
+                      {parsedData.slice(0, 15).map((row, i) => (
+                        <tr key={i} className="hover:bg-slate-55/10 transition-colors">
+                          {parsedHeaders.map((h) => (
+                            <td key={h} className="px-4 py-2.5 whitespace-nowrap truncate max-w-[150px]" title={row[h]}>
+                              {row[h]}
+                            </td>
+                          ))}
+                        </tr>
+                      ))}
+                      {parsedData.length > 15 && (
+                        <tr>
+                          <td colSpan={parsedHeaders.length} className="px-4 py-3 text-center text-slate-400 bg-slate-50/20 italic font-semibold">
+                            Showing first 15 of {parsedData.length} records.
+                          </td>
+                        </tr>
+                      )}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
             </div>
-          </div>
-        </div>
-      </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }

@@ -36,7 +36,7 @@ export default function Sidebar({ isOpen, setIsOpen }: { isOpen: boolean; setIsO
         }`}
       >
         {/* Logo Section */}
-        <div className="flex h-20 items-center justify-between px-6 border-b border-slate-800/40">
+        <div className="flex h-20 items-center justify-between px-6 border-b border-slate-800/20">
           <div className="flex items-center gap-3">
             {/* Custom Styled Piggy Logo */}
             <div className="flex h-10 w-10 items-center justify-center rounded-full bg-kolo-green text-kolo-dark">
@@ -56,13 +56,12 @@ export default function Sidebar({ isOpen, setIsOpen }: { isOpen: boolean; setIsO
                 <path d="M11 11h.01" />
               </svg>
             </div>
-            <span className="text-xl font-bold tracking-tight text-white font-sans">Kolo</span>
           </div>
           <button
-            onClick={() => setIsOpen(false)}
-            className="rounded-lg p-1.5 text-slate-400 hover:bg-slate-800 hover:text-white md:hidden"
+            onClick={() => setIsOpen(!isOpen)}
+            className="rounded-lg p-1.5 text-slate-400 hover:bg-slate-800 hover:text-white transition-colors"
           >
-            <X size={18} />
+            <Menu size={18} />
           </button>
         </div>
 

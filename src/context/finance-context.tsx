@@ -8,7 +8,7 @@ export interface Transaction {
   type: "income" | "expense";
   amount: number;
   category: string;
-  bank: "KUDA" | "GTBANK" | "OPAY" | "PALMPAY";
+  bank: "KUDA" | "GTBANK" | "OPAY" | "PALMPAY" | "MONIEPOINT";
   subtitle: string;
   date: string; // ISO format string
 }
@@ -39,32 +39,9 @@ interface FinanceContextType {
 
 const FinanceContext = createContext<FinanceContextType | undefined>(undefined);
 
-// Static Seed Data designed to perfectly match the values in the screenshots
+// Seed Data perfectly matching the screenshots
 const SEED_TRANSACTIONS: Transaction[] = [
-  // --- INCOMES (Total: ₦1,036,800 - 2 sources) ---
-  {
-    id: "inc-1",
-    title: "Salary — Paystack Ltd",
-    type: "income",
-    amount: 850000,
-    category: "Income",
-    bank: "GTBANK",
-    subtitle: "Income · NIP/PAYSTACK PAYMENTS/SALARY MAY",
-    date: "2026-05-28T08:12:00",
-  },
-  {
-    id: "inc-2",
-    title: "Consulting — Google Ireland",
-    type: "income",
-    amount: 186800,
-    category: "Income",
-    bank: "KUDA",
-    subtitle: "Income · WIRE TRANSFER OUTBOUND GOOGLE IRL",
-    date: "2026-05-25T10:15:00",
-  },
-  
-  // --- EXPENSES (Total: ₦389,300 - 42 transactions) ---
-  // Displayed in Recent Activity:
+  // --- THURSDAY, MAY 28 ---
   {
     id: "exp-1",
     title: "Uber",
@@ -75,6 +52,18 @@ const SEED_TRANSACTIONS: Transaction[] = [
     subtitle: "Transport · UBER BV AMSTERDAM NL",
     date: "2026-05-28T09:04:00",
   },
+  {
+    id: "inc-1",
+    title: "Salary — Paystack Ltd",
+    type: "income",
+    amount: 850000,
+    category: "Income",
+    bank: "GTBANK",
+    subtitle: "Income · NIP/PAYSTACK PAYMENTS/SALARY MAY",
+    date: "2026-05-28T08:12:00",
+  },
+  
+  // --- WEDNESDAY, MAY 27 ---
   {
     id: "exp-2",
     title: "Netflix",
@@ -105,87 +94,138 @@ const SEED_TRANSACTIONS: Transaction[] = [
     subtitle: "Transport · BOLT OPERATIONS NG VI",
     date: "2026-05-27T14:22:00",
   },
+
+  // --- MONDAY, MAY 25 ---
   {
-    id: "exp-5",
-    title: "MTN VTU",
+    id: "exp-jumia",
+    title: "Jumia Food",
     type: "expense",
-    amount: 2000,
-    category: "Airtime & Data",
-    bank: "GTBANK",
-    subtitle: "Airtime & Data · MTN AIRTIME RECHARGE 08031234567",
-    date: "2026-05-26T12:00:00",
+    amount: 9450,
+    category: "Food & Dining",
+    bank: "OPAY",
+    subtitle: "Food & Dining · JUMIA FOOD ORDER #884221",
+    date: "2026-05-25T20:14:00",
+  },
+  {
+    id: "inc-google",
+    title: "Consulting — Google Ireland",
+    type: "income",
+    amount: 186800,
+    category: "Income",
+    bank: "KUDA",
+    subtitle: "Income · WIRE TRANSFER OUTBOUND GOOGLE IRL",
+    date: "2026-05-25T10:15:00",
+  },
+  {
+    id: "exp-pos",
+    title: "POS Withdrawal",
+    type: "expense",
+    amount: 20000,
+    category: "POS & Cash",
+    bank: "MONIEPOINT",
+    subtitle: "POS & Cash · POS WDL/MONIEPOINT AGT/IKEJA",
+    date: "2026-05-25T09:12:00",
   },
 
-  // Target values for Category List in Screenshot:
-  // Transfers: ₦65,000 (Top Category)
+  // --- SUNDAY, MAY 24 ---
   {
-    id: "exp-cat-trans-1",
+    id: "exp-shoprite",
+    title: "Shoprite",
+    type: "expense",
+    amount: 28400,
+    category: "Groceries",
+    bank: "GTBANK",
+    subtitle: "Groceries · SHOPRITE LEKKI MALL",
+    date: "2026-05-24T16:33:00",
+  },
+  {
+    id: "exp-bolt-24",
+    title: "Bolt",
+    type: "expense",
+    amount: 3100,
+    category: "Transport",
+    bank: "PALMPAY",
+    subtitle: "Transport · BOLT TRIP DOWNTOWN",
+    date: "2026-05-24T08:02:00",
+  },
+
+  // --- SATURDAY, MAY 23 ---
+  {
+    id: "exp-sporty",
+    title: "SportyBet",
+    type: "expense",
+    amount: 5000,
+    category: "Betting",
+    bank: "PALMPAY",
+    subtitle: "Betting · SPORTYBET DEPOSIT/PALMPAY",
+    date: "2026-05-23T21:00:00",
+  },
+  {
+    id: "exp-airtel-23",
+    title: "Airtel Data",
+    type: "expense",
+    amount: 6500,
+    category: "Airtime & Data",
+    bank: "KUDA",
+    subtitle: "Airtime & Data · AIRTEL 15GB MONTHLY",
+    date: "2026-05-23T11:17:00",
+  },
+
+  // --- FRIDAY, MAY 22 ---
+  {
+    id: "exp-spar-22",
+    title: "Spar VI Shopping",
+    type: "expense",
+    amount: 12100,
+    category: "Groceries",
+    bank: "GTBANK",
+    subtitle: "Groceries · SPAR RETAIL MALL",
+    date: "2026-05-22T11:10:00",
+  },
+  {
+    id: "exp-airtel-22",
+    title: "Airtel Data",
+    type: "expense",
+    amount: 7700,
+    category: "Airtime & Data",
+    bank: "KUDA",
+    subtitle: "Airtime & Data · AIRTEL DATA TOPUP",
+    date: "2026-05-22T15:40:00",
+  },
+
+  // --- OLDER TRANSACTIONS IN MAY 2026 (Sums to 277,800 to make total 389,300) ---
+  {
+    id: "exp-old-1",
+    title: "Rent Contribution",
+    type: "expense",
+    amount: 150000,
+    category: "Transfers",
+    bank: "KUDA",
+    subtitle: "Transfers · RENT FOR MAY",
+    date: "2026-05-02T10:00:00",
+  },
+  {
+    id: "exp-old-2",
     title: "Transfer to Savings",
     type: "expense",
     amount: 50000,
     category: "Transfers",
     bank: "GTBANK",
     subtitle: "Transfers · SAVINGS ACCOUNT TOP-UP",
-    date: "2026-05-15T10:00:00",
+    date: "2026-05-15T12:00:00",
   },
   {
-    id: "exp-cat-trans-2",
-    title: "Rent Contribution",
+    id: "exp-old-3",
+    title: "Shoprite Supermarket",
     type: "expense",
-    amount: 15000,
-    category: "Transfers",
-    bank: "KUDA",
-    subtitle: "Transfers · ROOMMATE SPLIT",
-    date: "2026-05-24T16:45:00",
-  },
-
-  // Food & Dining: Total ₦63,250 (We have Chicken Republic ₦7,800. Needs ₦55,450)
-  {
-    id: "exp-cat-food-1",
-    title: "Cold Stone Creamery",
-    type: "expense",
-    amount: 15450,
-    category: "Food & Dining",
-    bank: "OPAY",
-    subtitle: "Food & Dining · POS/COLD STONE LEKKI",
-    date: "2026-05-18T14:30:00",
-  },
-  {
-    id: "exp-cat-food-2",
-    title: "Mega Plaza Eatery",
-    type: "expense",
-    amount: 40000,
-    category: "Food & Dining",
-    bank: "KUDA",
-    subtitle: "Food & Dining · POS/MEGA PLAZA RESTAURANT",
-    date: "2026-05-21T20:15:00",
-  },
-
-  // Groceries: Total ₦47,100
-  {
-    id: "exp-cat-groc-1",
-    title: "Shoprite Lekki",
-    type: "expense",
-    amount: 35000,
+    amount: 18700,
     category: "Groceries",
     bank: "GTBANK",
-    subtitle: "Groceries · SHOPRITE SUPERMARKET",
+    subtitle: "Groceries · SHOPRITE BULK GROCERIES",
     date: "2026-05-05T15:20:00",
   },
   {
-    id: "exp-cat-groc-2",
-    title: "Spar VI",
-    type: "expense",
-    amount: 12100,
-    category: "Groceries",
-    bank: "PALMPAY",
-    subtitle: "Groceries · SPAR RETAIL MALL",
-    date: "2026-05-22T11:10:00",
-  },
-
-  // Subscriptions: Total ₦45,600 (We have Netflix ₦5,500. Needs ₦40,100)
-  {
-    id: "exp-cat-sub-1",
+    id: "exp-old-4",
     title: "AWS Cloud Services",
     type: "expense",
     amount: 36000,
@@ -195,134 +235,26 @@ const SEED_TRANSACTIONS: Transaction[] = [
     date: "2026-05-18T02:00:00",
   },
   {
-    id: "exp-cat-sub-2",
-    title: "Spotify Premium",
+    id: "exp-old-5",
+    title: "Cold Stone Creamery",
     type: "expense",
-    amount: 2500,
-    category: "Subscriptions",
-    bank: "PALMPAY",
-    subtitle: "Subscriptions · SPOTIFY BILLING DE",
-    date: "2026-05-20T08:00:00",
-  },
-  {
-    id: "exp-cat-sub-3",
-    title: "YouTube Premium",
-    type: "expense",
-    amount: 1600,
-    category: "Subscriptions",
-    bank: "GTBANK",
-    subtitle: "Subscriptions · YOUTUBE MEMBER GOOGLE",
-    date: "2026-05-25T07:30:00",
-  },
-
-  // POS & Cash: Total ₦45,000
-  {
-    id: "exp-cat-pos-1",
-    title: "ATM Cash Withdrawal",
-    type: "expense",
-    amount: 30000,
-    category: "POS & Cash",
-    bank: "GTBANK",
-    subtitle: "POS & Cash · ATM CASH WD GTB LEKKI",
-    date: "2026-05-03T11:00:00",
-  },
-  {
-    id: "exp-cat-pos-2",
-    title: "POS Cash Out Agent",
-    type: "expense",
-    amount: 15000,
-    category: "POS & Cash",
+    amount: 15450,
+    category: "Food & Dining",
     bank: "OPAY",
-    subtitle: "POS & Cash · POS AGENT TRANSFER",
-    date: "2026-05-24T18:00:00",
-  },
-
-  // Transport: Total ₦31,950 (We have Uber ₦3,200, Bolt ₦2,750. Needs ₦26,000 in Transport)
-  // Let's spread this over a few other Uber & Bolt rides to match "You spent ₦31,950 on Uber and Bolt" in Kolo Insight
-  {
-    id: "exp-trans-uber-2",
-    title: "Uber Ride",
-    type: "expense",
-    amount: 8500,
-    category: "Transport",
-    bank: "KUDA",
-    subtitle: "Transport · UBER TRIP AMSTERDAM",
-    date: "2026-05-03T08:30:00",
+    subtitle: "Food & Dining · POS/COLD STONE LEKKI",
+    date: "2026-05-18T14:30:00",
   },
   {
-    id: "exp-trans-bolt-2",
-    title: "Bolt Ride",
+    id: "exp-old-6",
+    title: "Utility Bill",
     type: "expense",
-    amount: 6000,
-    category: "Transport",
-    bank: "PALMPAY",
-    subtitle: "Transport · BOLT RIDE LAGOS",
-    date: "2026-05-12T17:15:00",
-  },
-  {
-    id: "exp-trans-uber-3",
-    title: "Uber Ride",
-    type: "expense",
-    amount: 7500,
-    category: "Transport",
-    bank: "KUDA",
-    subtitle: "Transport · UBER TRIP",
-    date: "2026-05-19T22:00:00",
-  },
-  {
-    id: "exp-trans-bolt-3",
-    title: "Bolt Ride",
-    type: "expense",
-    amount: 4000,
-    category: "Transport",
-    bank: "OPAY",
-    subtitle: "Transport · BOLT TRIP",
-    date: "2026-05-23T15:00:00",
-  },
-
-  // Let's add remaining expenses in "Other" or "Shopping" to match ₦389,300 total.
-  // Expenses so far:
-  // Recent Activity: Uber 3200, Netflix 5500, Chicken Republic 7800, Bolt 2750, MTN 2000 (Total 21,250)
-  // Transfers: 50000 + 15000 = 65000
-  // Food & Dining: 15450 + 40000 = 55450 (Total 63250 with Chicken Rep)
-  // Groceries: 35000 + 12100 = 47100
-  // Subscriptions: 36000 + 2500 + 1600 = 40100 (Total 45600 with Netflix)
-  // POS & Cash: 30000 + 15000 = 45000
-  // Transport: 8500 + 6000 + 7500 + 4000 = 26000 (Total 31950 with Uber & Bolt)
-  // Total of above: 21,250 + 65,000 + 55,450 + 47,100 + 40,100 + 45,000 + 26,000 = 299,900.
-  // Remaining to hit 389,300: 389,300 - 299,900 = 89,400.
-  // Let's create more small transactions in "Other" or "Shopping" categories.
-  // Let's spread this over 21 small transactions to reach a total of 42 expense transactions!
-  // This will make exactly 42 transactions total in the Expenses list!
-  // Let's design these 21 transactions to add up to ₦89,400. Let's make them average around ₦4,250.
-  { id: "e-m1", title: "Spar VI Shopping", type: "expense", amount: 4500, category: "Shopping", bank: "GTBANK", subtitle: "Shopping · SPAR VI", date: "2026-05-02T12:00:00" },
-  { id: "e-m2", title: "Pharmacy Medicals", type: "expense", amount: 3200, category: "Health", bank: "KUDA", subtitle: "Health · HEALTHPLUS LAGOS", date: "2026-05-04T10:00:00" },
-  { id: "e-m3", title: "Fuel Purchase", type: "expense", amount: 6000, category: "Other", bank: "OPAY", subtitle: "Other · TOTAL ENEGY STATION", date: "2026-05-05T18:00:00" },
-  { id: "e-m4", title: "Steam Games", type: "expense", amount: 4800, category: "Entertainment", bank: "PALMPAY", subtitle: "Entertainment · STEAM GAMES CO", date: "2026-05-06T23:00:00" },
-  { id: "e-m5", title: "Coffee at Bistro", type: "expense", amount: 2500, category: "Food & Dining", bank: "KUDA", subtitle: "Food & Dining · BISTRO DELIGHT", date: "2026-05-07T09:00:00" },
-  { id: "e-m6", title: "Airtime Reload", type: "expense", amount: 1000, category: "Airtime & Data", bank: "GTBANK", subtitle: "Airtime & Data · MTN VTU", date: "2026-05-09T08:00:00" },
-  { id: "e-m7", title: "Gym Day Pass", type: "expense", amount: 5000, category: "Health", bank: "PALMPAY", subtitle: "Health · FITNESS CENTRAL", date: "2026-05-10T07:00:00" },
-  { id: "e-m8", title: "Cinema Ticket", type: "expense", amount: 3500, category: "Entertainment", bank: "OPAY", subtitle: "Entertainment · FILMHOUSE LEKKI", date: "2026-05-11T20:30:00" },
-  { id: "e-m9", title: "Data Bundle", type: "expense", amount: 5000, category: "Airtime & Data", bank: "GTBANK", subtitle: "Airtime & Data · GLO DATA BUNDLE", date: "2026-05-12T11:00:00" },
-  { id: "e-m10", title: "Pharmacy Meds", type: "expense", amount: 2200, category: "Health", bank: "KUDA", subtitle: "Health · PHARMACY", date: "2026-05-13T14:00:00" },
-  { id: "e-m11", title: "Laundry Service", type: "expense", amount: 8000, category: "Other", bank: "GTBANK", subtitle: "Other · CLEAN LAUNDRY SERVICE", date: "2026-05-14T10:00:00" },
-  { id: "e-m12", title: "Water Supply", type: "expense", amount: 3000, category: "Other", bank: "PALMPAY", subtitle: "Other · WATER BILL", date: "2026-05-16T12:00:00" },
-  { id: "e-m13", title: "Bookstore", type: "expense", amount: 7500, category: "Shopping", bank: "KUDA", subtitle: "Shopping · JUMIA BOOKS", date: "2026-05-17T15:00:00" },
-  { id: "e-m14", title: "Office Supplies", type: "expense", amount: 4200, category: "Other", bank: "OPAY", subtitle: "Other · STATIONERY SHOP", date: "2026-05-19T11:00:00" },
-  { id: "e-m15", title: "Snacks at Store", type: "expense", amount: 1500, category: "Food & Dining", bank: "GTBANK", subtitle: "Food & Dining · SUPERSTORE", date: "2026-05-20T16:00:00" },
-  { id: "e-m16", title: "Gift Card", type: "expense", amount: 10000, category: "Shopping", bank: "PALMPAY", subtitle: "Shopping · APPLE GIFT CARD", date: "2026-05-21T18:00:00" },
-  { id: "e-m17", title: "Haircut", type: "expense", amount: 5000, category: "Other", bank: "OPAY", subtitle: "Other · SALON BARBER SHOP", date: "2026-05-22T17:00:00" },
-  { id: "e-m18", title: "Apple Storage", type: "expense", amount: 1500, category: "Subscriptions", bank: "KUDA", subtitle: "Subscriptions · ICLOUD STORAGE", date: "2026-05-23T06:00:00" },
-  { id: "e-m19", title: "Utility Bill", type: "expense", amount: 4000, category: "Other", bank: "GTBANK", subtitle: "Other · EKEDC ELECTRICITY", date: "2026-05-24T12:00:00" },
-  { id: "e-m20", title: "Online Course", type: "expense", amount: 2000, category: "Other", bank: "PALMPAY", subtitle: "Other · UDEMY COURSE FEE", date: "2026-05-25T14:00:00" },
-  { id: "e-m21", title: "Bolt Ride Tip", type: "expense", amount: 1000, category: "Transport", bank: "OPAY", subtitle: "Transport · BOLT DRIVER TIP", date: "2026-05-26T15:00:00" }
+    amount: 7650,
+    category: "Bills & Utilities",
+    bank: "GTBANK",
+    subtitle: "Bills & Utilities · PHCN ELECTRICITY BILL",
+    date: "2026-05-20T12:00:00",
+  }
 ];
-
-// Verify sum:
-// Sum of remaining 21 = 4500+3200+6000+4800+2500+1000+5000+3500+5000+2200+8000+3000+7500+4200+1500+10000+5000+1500+4000+2000+1000 = 89,400!
-// 89,400 + 299,900 = 389,300!
-// The sum of these 42 expense transactions is EXACTLY 389,300!
-// Perfect!
 
 export function FinanceProvider({ children }: { children: React.ReactNode }) {
   const [activeTab, setActiveTab] = useState<TabType>("dashboard");

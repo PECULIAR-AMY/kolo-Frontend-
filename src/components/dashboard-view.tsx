@@ -58,6 +58,8 @@ const getBankStyle = (bank: Transaction["bank"]) => {
       return "bg-opay-bg text-opay-text";
     case "PALMPAY":
       return "bg-palmpay-bg text-palmpay-text";
+    case "MONIEPOINT":
+      return "bg-moniepoint-bg text-moniepoint-text";
   }
 };
 

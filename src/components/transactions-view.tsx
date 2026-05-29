@@ -2,8 +2,77 @@
 
 import React, { useState, useMemo } from "react";
 import { useFinance, Transaction } from "@/context/finance-context";
-import { Search, Filter, Trash2, Edit2, Plus, X } from "lucide-react";
+import { 
+  Search, 
+  Trash2, 
+  Edit2, 
+  Plus, 
+  X,
+  Car, 
+  Wallet, 
+  Utensils, 
+  RefreshCw, 
+  ShoppingCart, 
+  Smartphone, 
+  ArrowLeftRight, 
+  CreditCard, 
+  Trophy, 
+  Zap, 
+  Tv, 
+  ShoppingBag, 
+  HelpCircle 
+} from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
+
+// Helper to get transaction category icon
+const getCategoryIcon = (category: string, type: "income" | "expense") => {
+  if (type === "income") return <Wallet className="h-5 w-5 text-slate-500" />;
+  
+  switch (category) {
+    case "Transport":
+      return <Car className="h-5 w-5 text-slate-500" />;
+    case "Food & Dining":
+      return <Utensils className="h-5 w-5 text-slate-500" />;
+    case "Subscriptions":
+      return <RefreshCw className="h-5 w-5 text-slate-500" />;
+    case "Groceries":
+      return <ShoppingCart className="h-5 w-5 text-slate-500" />;
+    case "Airtime & Data":
+      return <Smartphone className="h-5 w-5 text-slate-500" />;
+    case "Transfers":
+      return <ArrowLeftRight className="h-5 w-5 text-slate-500" />;
+    case "POS & Cash":
+      return <CreditCard className="h-5 w-5 text-slate-500" />;
+    case "Betting":
+      return <Trophy className="h-5 w-5 text-slate-500" />;
+    case "Bills & Utilities":
+      return <Zap className="h-5 w-5 text-slate-500" />;
+    case "Entertainment":
+      return <Tv className="h-5 w-5 text-slate-500" />;
+    case "Shopping":
+      return <ShoppingBag className="h-5 w-5 text-slate-500" />;
+    default:
+      return <HelpCircle className="h-5 w-5 text-slate-500" />;
+  }
+};
+
+// Helper to get bank badge styling
+const getBankBadgeStyle = (bank: Transaction["bank"]) => {
+  switch (bank) {
+    case "KUDA":
+      return "bg-kuda-bg text-kuda-text";
+    case "GTBANK":
+      return "bg-gtbank-bg text-gtbank-text";
+    case "OPAY":
+      return "bg-opay-bg text-opay-text";
+    case "PALMPAY":
+      return "bg-palmpay-bg text-palmpay-text";
+    case "MONIEPOINT":
+      return "bg-moniepoint-bg text-moniepoint-text";
+    default:
+      return "bg-slate-100 text-slate-600";
+  }
+};
 
 export default function TransactionsView({ 
   isFormOpen, 
@@ -20,8 +89,8 @@ export default function TransactionsView({
   
   // Search & Filter state
   const [search, setSearch] = useState("");
+  const [selectedType, setSelectedType] = useState<"all" | "spent" | "received">("all");
   const [selectedCategory, setSelectedCategory] = useState<string>("All");
-  const [selectedBank, setSelectedBank] = useState<string>("All");
 
   // Form states (managed locally, synced on modal open)
   const [formTitle, setFormTitle] = useState("");
@@ -32,27 +101,86 @@ export default function TransactionsView({
   const [formBank, setFormBank] = useState<Transaction["bank"]>("GTBANK");
   const [formDate, setFormDate] = useState("");
 
-  // Unique categories & banks from dataset for filter dropdowns
-  const categories = useMemo(() => {
-    const list = new Set(transactions.map((t) => t.category));
-    return ["All", ...Array.from(list)];
-  }, [transactions]);
-
-  const banks = ["All", "GTBANK", "KUDA", "OPAY", "PALMPAY"];
+  const categories = [
+    "Transport",
+    "Food & Dining",
+    "Groceries",
+    "Bills & Utilities",
+    "Airtime & Data",
+    "Subscriptions",
+    "Entertainment",
+    "Transfers",
+    "POS & Cash",
+    "Income",
+    "Shopping",
+    "Betting"
+  ];
 
   // Filtered transactions
   const filteredTxs = useMemo(() => {
     return transactions.filter((t) => {
+      // 1. Search text matches title, subtitle, category or bank
       const matchesSearch = 
         t.title.toLowerCase().includes(search.toLowerCase()) || 
-        t.subtitle.toLowerCase().includes(search.toLowerCase());
+        t.subtitle.toLowerCase().includes(search.toLowerCase()) ||
+        t.category.toLowerCase().includes(search.toLowerCase());
       
-      const matchesCategory = selectedCategory === "All" || t.category === selectedCategory;
-      const matchesBank = selectedBank === "All" || t.bank === selectedBank;
+      // 2. Filter by transaction type: all, spent (expense), received (income)
+      let matchesType = true;
+      if (selectedType === "spent") matchesType = t.type === "expense";
+      else if (selectedType === "received") matchesType = t.type === "income";
 
-      return matchesSearch && matchesCategory && matchesBank;
+      // 3. Filter by category pill selection
+      const matchesCategory = selectedCategory === "All" || t.category === selectedCategory;
+
+      return matchesSearch && matchesType && matchesCategory;
     });
-  }, [transactions, search, selectedCategory, selectedBank]);
+  }, [transactions, search, selectedType, selectedCategory]);
+
+  // Group transactions by day and calculate daily spent
+  const groupedTxs = useMemo(() => {
+    // Sort transactions by date descending
+    const sorted = [...filteredTxs].sort(
+      (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()
+    );
+
+    const groups: Record<string, { dateStr: string; dayExpenses: number; txs: Transaction[] }> = {};
+
+    sorted.forEach((tx) => {
+      const d = new Date(tx.date);
+      // Format day header: e.g., "THURSDAY, MAY 28"
+      const dateStr = d.toLocaleDateString("en-US", {
+        weekday: "long",
+        month: "long",
+        day: "numeric"
+      }).toUpperCase();
+
+      if (!groups[dateStr]) {
+        groups[dateStr] = {
+          dateStr,
+          dayExpenses: 0,
+          txs: []
+        };
+      }
+
+      groups[dateStr].txs.push(tx);
+      if (tx.type === "expense") {
+        groups[dateStr].dayExpenses += tx.amount;
+      }
+    });
+
+    return Object.values(groups);
+  }, [filteredTxs]);
+
+  // Subtitle/Date formatter: e.g., "May 28 · 09:04"
+  const formatDateSub = (dateStr: string) => {
+    const d = new Date(dateStr);
+    const month = d.toLocaleDateString("en-US", { month: "short" });
+    const day = d.getDate();
+    const hours = String(d.getHours()).padStart(2, "0");
+    const minutes = String(d.getMinutes()).padStart(2, "0");
+    return `${month} ${day} · ${hours}:${minutes}`;
+  };
 
   // Open form for adding
   const handleNewClick = () => {
@@ -91,9 +219,12 @@ export default function TransactionsView({
     e.preventDefault();
     if (!formTitle || !formAmount || isNaN(Number(formAmount))) return;
 
+    // Standardize subtitle format: "Category · SUBTITLE TEXT IN UPPERCASE"
+    const cleanedSub = formSubtitle || `${formCategory} · ${formTitle.toUpperCase()}`;
+
     const payload = {
       title: formTitle,
-      subtitle: formSubtitle || `${formCategory} · ${formTitle.toUpperCase()}`,
+      subtitle: cleanedSub,
       type: formType,
       amount: Math.abs(Number(formAmount)),
       category: formCategory,
@@ -123,162 +254,183 @@ export default function TransactionsView({
   return (
     <div className="px-6 py-6 md:px-10 space-y-6">
       {/* Filtering Actions Panel */}
-      <div className="flex flex-col gap-4 rounded-2xl bg-white border border-slate-100 p-4 shadow-sm sm:flex-row sm:items-center sm:justify-between">
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         {/* Search */}
-        <div className="relative flex-1">
-          <Search className="absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+        <div className="relative flex-1 max-w-lg">
+          <Search className="absolute left-4 top-1/2 h-4.5 w-4.5 -translate-y-1/2 text-slate-400" />
           <input
             type="text"
-            placeholder="Search transactions..."
+            placeholder="Search merchant, narration, category..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="w-full rounded-full border border-slate-200 bg-slate-50/50 pl-10 pr-4 py-2 text-sm text-slate-800 placeholder-slate-400 outline-none transition-all focus:border-kolo-green focus:bg-white"
+            className="w-full rounded-full border border-slate-200 bg-white pl-11 pr-4 py-2.5 text-sm text-slate-800 placeholder-slate-400 outline-none transition-all focus:border-slate-350 focus:bg-white"
           />
         </div>
 
         {/* Filters */}
-        <div className="flex flex-wrap items-center gap-2">
-          {/* Category Filter */}
-          <div className="flex items-center gap-1.5 rounded-full border border-slate-200 bg-slate-50/30 px-3 py-1.5 text-xs text-slate-600">
-            <span className="font-semibold text-slate-400">Cat:</span>
-            <select
-              value={selectedCategory}
-              onChange={(e) => setSelectedCategory(e.target.value)}
-              className="bg-transparent font-bold text-slate-700 outline-none cursor-pointer"
+        <div className="flex items-center gap-2.5">
+          {/* Spent / Received toggle */}
+          <div className="flex items-center rounded-full bg-slate-100 p-1 border border-slate-250/20">
+            <button
+              onClick={() => setSelectedType("all")}
+              className={`rounded-full px-4.5 py-1.5 text-xs font-bold transition-all ${
+                selectedType === "all"
+                  ? "bg-slate-950 text-white shadow-sm"
+                  : "text-slate-500 hover:text-slate-900"
+              }`}
             >
-              {categories.map((c) => (
-                <option key={c} value={c}>{c}</option>
-              ))}
-            </select>
-          </div>
-
-          {/* Bank Filter */}
-          <div className="flex items-center gap-1.5 rounded-full border border-slate-200 bg-slate-50/30 px-3 py-1.5 text-xs text-slate-600">
-            <span className="font-semibold text-slate-400">Bank:</span>
-            <select
-              value={selectedBank}
-              onChange={(e) => setSelectedBank(e.target.value)}
-              className="bg-transparent font-bold text-slate-700 outline-none cursor-pointer"
+              All
+            </button>
+            <button
+              onClick={() => setSelectedType("spent")}
+              className={`rounded-full px-4.5 py-1.5 text-xs font-bold transition-all ${
+                selectedType === "spent"
+                  ? "bg-slate-950 text-white shadow-sm"
+                  : "text-slate-500 hover:text-slate-900"
+              }`}
             >
-              {banks.map((b) => (
-                <option key={b} value={b}>{b}</option>
-              ))}
-            </select>
+              Spent
+            </button>
+            <button
+              onClick={() => setSelectedType("received")}
+              className={`rounded-full px-4.5 py-1.5 text-xs font-bold transition-all ${
+                selectedType === "received"
+                  ? "bg-slate-950 text-white shadow-sm"
+                  : "text-slate-500 hover:text-slate-900"
+              }`}
+            >
+              Received
+            </button>
           </div>
 
           {/* Create Button */}
           <button
             onClick={handleNewClick}
-            className="flex items-center gap-1.5 rounded-full bg-kolo-green px-4 py-2 text-xs font-bold text-kolo-dark hover:bg-kolo-green-hover transition-colors active:scale-95 cursor-pointer ml-auto sm:ml-0"
+            className="flex items-center gap-1.5 rounded-full bg-kolo-green px-4.5 py-2.5 text-xs font-black text-kolo-dark hover:bg-kolo-green-hover transition-colors active:scale-95 cursor-pointer shadow-sm"
           >
-            <Plus size={14} />
+            <Plus size={14} className="stroke-[3]" />
             <span>New</span>
           </button>
 
           {/* Reset Seeding Data */}
           <button
             onClick={resetToDefault}
-            className="rounded-full border border-slate-200 hover:bg-slate-50 px-3.5 py-2 text-xs font-semibold text-slate-500 transition-colors"
+            className="rounded-full border border-slate-200 bg-white hover:bg-slate-50 px-3.5 py-2.5 text-xs font-bold text-slate-500 transition-colors"
           >
-            Reset Data
+            Reset
           </button>
         </div>
       </div>
 
-      {/* Database Grid Table */}
-      <div className="overflow-hidden rounded-2xl bg-white border border-slate-100 shadow-sm">
-        <div className="overflow-x-auto">
-          <table className="w-full text-left border-collapse">
-            <thead>
-              <tr className="border-b border-slate-100 bg-slate-50/75 text-[11px] font-bold uppercase tracking-wider text-slate-400">
-                <th className="px-6 py-4">Date</th>
-                <th className="px-6 py-4">Transaction / Vendor</th>
-                <th className="px-6 py-4">Category</th>
-                <th className="px-6 py-4">Bank</th>
-                <th className="px-6 py-4 text-right">Amount</th>
-                <th className="px-6 py-4 text-center">Actions</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-100 text-xs text-slate-600">
-              {filteredTxs.length === 0 ? (
-                <tr>
-                  <td colSpan={6} className="px-6 py-12 text-center text-slate-400">
-                    No transactions match your search filters.
-                  </td>
-                </tr>
-              ) : (
-                filteredTxs.map((tx) => (
-                  <tr key={tx.id} className="hover:bg-slate-55/20 transition-colors">
-                    {/* Date */}
-                    <td className="px-6 py-4.5 whitespace-nowrap">
-                      {new Date(tx.date).toLocaleDateString("en-US", {
-                        year: "numeric",
-                        month: "short",
-                        day: "numeric",
-                      })}
-                      <span className="block text-[10px] text-slate-400 mt-0.5">
-                        {new Date(tx.date).toLocaleTimeString("en-US", {
-                          hour: "2-digit",
-                          minute: "2-digit",
-                          hour12: false,
-                        })}
-                      </span>
-                    </td>
-                    {/* Description */}
-                    <td className="px-6 py-4.5">
-                      <span className="font-bold text-slate-900 block">{tx.title}</span>
-                      <span className="text-[10px] text-slate-400 block mt-0.5 max-w-xs truncate">
-                        {tx.subtitle}
-                      </span>
-                    </td>
-                    {/* Category */}
-                    <td className="px-6 py-4.5 whitespace-nowrap">
-                      <span className="rounded-full bg-slate-100 px-2.5 py-1 text-[10px] font-semibold text-slate-600">
-                        {tx.category}
-                      </span>
-                    </td>
-                    {/* Bank */}
-                    <td className="px-6 py-4.5 whitespace-nowrap">
-                      <span className={`rounded-md px-2 py-0.5 text-[9px] font-bold uppercase ${
-                        tx.bank === "KUDA" ? "bg-kuda-bg text-kuda-text" :
-                        tx.bank === "GTBANK" ? "bg-gtbank-bg text-gtbank-text" :
-                        tx.bank === "OPAY" ? "bg-opay-bg text-opay-text" :
-                        "bg-palmpay-bg text-palmpay-text"
-                      }`}>
-                        {tx.bank}
-                      </span>
-                    </td>
-                    {/* Amount */}
-                    <td className={`px-6 py-4.5 text-right whitespace-nowrap font-bold text-sm font-sans ${
-                      tx.type === "income" ? "text-emerald-500" : "text-slate-900"
-                    }`}>
-                      {tx.type === "income" ? "+ " : "- "}₦{tx.amount.toLocaleString("en-NG")}
-                    </td>
-                    {/* Actions */}
-                    <td className="px-6 py-4.5 text-center whitespace-nowrap">
-                      <div className="inline-flex items-center gap-1">
+      {/* Category Pills Row */}
+      <div className="flex items-center gap-2 overflow-x-auto pb-2 scrollbar-none -mx-6 px-6 md:-mx-10 md:px-10">
+        {categories.map((cat) => {
+          const isSelected = selectedCategory === cat;
+          return (
+            <button
+              key={cat}
+              onClick={() => setSelectedCategory(isSelected ? "All" : cat)}
+              className={`rounded-full px-4.5 py-1.5 text-xs font-bold whitespace-nowrap border transition-all ${
+                isSelected 
+                  ? "bg-slate-950 border-slate-950 text-white" 
+                  : "bg-white border-slate-200/80 text-slate-650 hover:bg-slate-50"
+              }`}
+            >
+              {cat}
+            </button>
+          );
+        })}
+      </div>
+
+      {/* Grouped Day-by-Day List */}
+      <div className="space-y-6">
+        {groupedTxs.length === 0 ? (
+          <div className="rounded-3xl bg-white border border-slate-100 p-12 text-center text-slate-400 font-semibold shadow-sm">
+            No transactions match your search filters.
+          </div>
+        ) : (
+          groupedTxs.map((group) => (
+            <div key={group.dateStr} className="space-y-2.5">
+              {/* Day Header */}
+              <div className="flex items-center justify-between text-xs font-black tracking-wider text-slate-400 px-1">
+                <span>{group.dateStr}</span>
+                {group.dayExpenses > 0 && (
+                  <span className="font-semibold capitalize text-slate-400">₦{group.dayExpenses.toLocaleString("en-NG")} spent</span>
+                )}
+              </div>
+
+              {/* Day Transactions Card Box */}
+              <div className="rounded-3xl bg-white border border-slate-100/80 shadow-sm overflow-hidden divide-y divide-slate-100/50">
+                {group.txs.map((tx) => (
+                  <div
+                    key={tx.id}
+                    onClick={() => handleEditClick(tx)}
+                    className="group relative flex items-center justify-between px-6 py-4.5 hover:bg-slate-50/40 transition-all cursor-pointer"
+                  >
+                    <div className="flex items-center gap-4">
+                      {/* Icon Circular Background */}
+                      <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-slate-100/80 text-slate-500">
+                        {getCategoryIcon(tx.category, tx.type)}
+                      </div>
+
+                      {/* Merchant details */}
+                      <div className="flex flex-col">
+                        <div className="flex items-center flex-wrap gap-1.5">
+                          <span className="text-sm font-extrabold text-slate-950">{tx.title}</span>
+                          <span className={`px-1.5 py-0.5 text-[8px] font-black rounded uppercase tracking-wider ${getBankBadgeStyle(tx.bank)}`}>
+                            {tx.bank}
+                          </span>
+                        </div>
+                        <span className="text-xs text-slate-400 font-semibold mt-0.5">
+                          {tx.category} · {tx.subtitle.includes("·") ? tx.subtitle.split("·").slice(1).join("·").trim() : tx.subtitle}
+                        </span>
+                      </div>
+                    </div>
+
+                    {/* Amount, Date and Hover Action Buttons */}
+                    <div className="flex items-center gap-4">
+                      {/* Hover action overlay */}
+                      <div className="opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-1">
                         <button
-                          onClick={() => handleEditClick(tx)}
-                          className="rounded-lg p-1.5 text-slate-400 hover:bg-slate-100 hover:text-slate-700 transition-colors cursor-pointer"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleEditClick(tx);
+                          }}
+                          className="rounded-full p-1.5 bg-slate-100 hover:bg-slate-200 text-slate-600 transition-colors"
                           title="Edit transaction"
                         >
-                          <Edit2 size={14} />
+                          <Edit2 size={12} />
                         </button>
                         <button
-                          onClick={() => deleteTransaction(tx.id)}
-                          className="rounded-lg p-1.5 text-slate-400 hover:bg-rose-50 hover:text-rose-600 transition-colors cursor-pointer"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            deleteTransaction(tx.id);
+                          }}
+                          className="rounded-full p-1.5 bg-rose-50 hover:bg-rose-100 text-rose-600 transition-colors"
                           title="Delete transaction"
                         >
-                          <Trash2 size={14} />
+                          <Trash2 size={12} />
                         </button>
                       </div>
-                    </td>
-                  </tr>
-                ))
-              )}
-            </tbody>
-          </table>
-        </div>
+
+                      {/* Price / Subtitle info */}
+                      <div className="flex flex-col items-end shrink-0">
+                        <span className={`text-sm font-black font-sans ${
+                          tx.type === "income" ? "text-[#22c55e]" : "text-slate-950"
+                        }`}>
+                          {tx.type === "income" ? "+ " : "- "}₦{tx.amount.toLocaleString("en-NG")}
+                        </span>
+                        <span className="text-[10px] text-slate-400 font-semibold mt-0.5">
+                          {formatDateSub(tx.date)}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          ))
+        )}
       </div>
 
       {/* Modal Form for Add/Edit */}
@@ -354,11 +506,14 @@ export default function TransactionsView({
                       <option value="Transport">Transport</option>
                       <option value="Food & Dining">Food & Dining</option>
                       <option value="Groceries">Groceries</option>
+                      <option value="Bills & Utilities">Bills & Utilities</option>
+                      <option value="Airtime & Data">Airtime & Data</option>
                       <option value="Subscriptions">Subscriptions</option>
+                      <option value="Entertainment">Entertainment</option>
                       <option value="Transfers">Transfers</option>
                       <option value="POS & Cash">POS & Cash</option>
-                      <option value="Airtime & Data">Airtime & Data</option>
                       <option value="Shopping">Shopping</option>
+                      <option value="Betting">Betting</option>
                       <option value="Health">Health & Wellness</option>
                       <option value="Other">Other</option>
                     </select>
@@ -377,6 +532,7 @@ export default function TransactionsView({
                       <option value="KUDA">KUDA</option>
                       <option value="OPAY">OPAY</option>
                       <option value="PALMPAY">PALMPAY</option>
+                      <option value="MONIEPOINT">MONIEPOINT</option>
                     </select>
                   </div>
                 </div>
@@ -425,13 +581,27 @@ export default function TransactionsView({
                   />
                 </div>
 
-                {/* Submit */}
-                <button
-                  type="submit"
-                  className="w-full rounded-xl bg-kolo-dark py-3.5 text-center text-sm font-bold text-white hover:bg-slate-800 transition-colors active:scale-95 mt-4 cursor-pointer"
-                >
-                  {editingTx ? "Save Changes" : "Create Transaction"}
-                </button>
+                {/* Buttons container */}
+                <div className="flex gap-3 pt-3">
+                  {editingTx && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        deleteTransaction(editingTx.id);
+                        setIsFormOpen(false);
+                      }}
+                      className="flex-1 rounded-xl bg-rose-50 text-rose-600 py-3.5 text-center text-sm font-bold hover:bg-rose-100 transition-colors cursor-pointer"
+                    >
+                      Delete
+                    </button>
+                  )}
+                  <button
+                    type="submit"
+                    className="flex-2 rounded-xl bg-kolo-dark py-3.5 text-center text-sm font-bold text-white hover:bg-slate-800 transition-colors active:scale-95 cursor-pointer"
+                  >
+                    {editingTx ? "Save Changes" : "Create Transaction"}
+                  </button>
+                </div>
               </form>
             </motion.div>
           </div>

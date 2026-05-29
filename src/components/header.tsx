@@ -11,8 +11,8 @@ export default function Header({
   onMenuClick: () => void;
   onAddClick: () => void;
 }) {
-  const { activeTab, setActiveTab } = useFinance();
-
+  const { activeTab, setActiveTab, totalExpenses, totalIncome } = useFinance();
+ 
   const getHeaderInfo = () => {
     switch (activeTab) {
       case "dashboard":
@@ -31,16 +31,17 @@ export default function Header({
         };
       case "transactions":
         return {
-          breadcrumb: "May 2026 - transactions database",
-          title: "Transaction Manager",
+          breadcrumb: "All accounts · May 2026",
+          title: "Transactions",
           action: (
-            <button
-              onClick={onAddClick}
-              className="flex items-center gap-1.5 rounded-full bg-slate-900 px-4 py-2 text-xs font-semibold text-white transition-all hover:bg-slate-800 active:scale-95"
-            >
-              <Plus size={14} />
-              <span>Add Transaction</span>
-            </button>
+            <div className="flex items-center gap-5 text-sm">
+              <span className="text-slate-600 font-medium">
+                Out <span className="text-slate-950 font-black ml-1 font-sans">₦{totalExpenses.toLocaleString("en-NG")}</span>
+              </span>
+              <span className="text-slate-600 font-medium">
+                In <span className="text-[#22c55e] font-black ml-1 font-sans">₦{totalIncome.toLocaleString("en-NG")}</span>
+              </span>
+            </div>
           ),
         };
       case "import":
@@ -59,11 +60,11 @@ export default function Header({
         };
     }
   };
-
+ 
   const info = getHeaderInfo();
-
+ 
   return (
-    <header className="flex h-20 items-center justify-between px-6 bg-transparent border-b border-slate-100 md:px-10">
+    <header className="flex h-20 items-center justify-between px-6 bg-transparent border-b border-slate-100/50 md:px-10">
       <div className="flex items-center gap-3">
         {/* Mobile menu toggle */}
         <button
@@ -72,10 +73,10 @@ export default function Header({
         >
           <Menu size={20} />
         </button>
-
+ 
         <div className="flex flex-col">
-          <span className="text-xs font-medium text-slate-400 capitalize">{info.breadcrumb}</span>
-          <h1 className="text-xl font-bold tracking-tight text-slate-900 md:text-2xl">{info.title}</h1>
+          <span className={`text-xs font-medium text-slate-400 ${activeTab !== "transactions" ? "capitalize" : ""}`}>{info.breadcrumb}</span>
+          <h1 className="text-2xl md:text-3xl font-black tracking-tight text-slate-950 mt-1">{info.title}</h1>
         </div>
       </div>
       <div>{info.action}</div>
