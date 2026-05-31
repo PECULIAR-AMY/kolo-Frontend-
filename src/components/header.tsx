@@ -2,6 +2,7 @@
 
 import React from "react";
 import { useFinance } from "@/context/finance-context";
+import { useAuth } from "@/context/auth-context";
 import { ArrowUpRight, Plus, LayoutDashboard, Menu } from "lucide-react";
 
 export default function Header({
@@ -12,12 +13,14 @@ export default function Header({
   onAddClick: () => void;
 }) {
   const { activeTab, setActiveTab, totalExpenses, totalIncome } = useFinance();
+  const { user } = useAuth();
  
   const getHeaderInfo = () => {
     switch (activeTab) {
       case "dashboard":
+        const firstName = user?.name ? user.name.split(" ")[0] : "there";
         return {
-          breadcrumb: "May 2026 - overview",
+          breadcrumb: `Hello, ${firstName}! 👋`,
           title: "Where did your money go?",
           action: (
             <button
