@@ -13,7 +13,7 @@ export interface Transaction {
   date: string; // ISO format string
 }
 
-type TabType = "dashboard" | "transactions" | "import";
+export type TabType = "dashboard" | "transactions" | "import" | "ai-assistant";
 
 interface FinanceContextType {
   activeTab: TabType;

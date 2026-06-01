@@ -9,6 +9,7 @@ import Header from "@/components/header";
 import DashboardView from "@/components/dashboard-view";
 import TransactionsView from "@/components/transactions-view";
 import ImportCsvView from "@/components/import-csv-view";
+import AiAssistantView from "@/components/ai-assistant-view";
 import { motion } from "framer-motion";
 
 function AppContent() {
@@ -49,6 +50,8 @@ function AppContent() {
         );
       case "import":
         return <ImportCsvView />;
+      case "ai-assistant":
+        return <AiAssistantView />;
     }
   };
 

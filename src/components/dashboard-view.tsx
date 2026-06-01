@@ -2,6 +2,7 @@
 
 import React from "react";
 import { useFinance, Transaction } from "@/context/finance-context";
+import { generateAIInsights } from "@/utils/ai-engine";
 import SpendingTrend from "./spending-trend";
 import { motion } from "framer-motion";
 import { 
@@ -18,7 +19,9 @@ import {
   Heart,
   HelpCircle,
   Sparkles,
-  CreditCard
+  CreditCard,
+  ChevronLeft,
+  ChevronRight
 } from "lucide-react";
 
 // Helper to get transaction category icon
@@ -65,6 +68,7 @@ const getBankStyle = (bank: Transaction["bank"]) => {
 
 export default function DashboardView() {
   const {
+    transactions,
     totalIncome,
     totalExpenses,
     savingsAmount,
@@ -76,6 +80,21 @@ export default function DashboardView() {
     recentActivity,
     setActiveTab,
   } = useFinance();
+
+  const insights = React.useMemo(() => generateAIInsights(transactions), [transactions]);
+  const [currentInsightIdx, setCurrentInsightIdx] = React.useState(0);
+
+  const activeInsight = insights[currentInsightIdx] || insights[0];
+
+  const handleNextInsight = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    setCurrentInsightIdx((prev) => (prev + 1) % insights.length);
+  };
+
+  const handlePrevInsight = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    setCurrentInsightIdx((prev) => (prev - 1 + insights.length) % insights.length);
+  };
 
   const containerVariants = {
     hidden: { opacity: 0 },
@@ -183,24 +202,71 @@ export default function DashboardView() {
           <div className="absolute top-0 right-0 h-40 w-40 rounded-full bg-emerald-500/10 blur-[60px]" />
           
           <div>
-            <div className="inline-flex items-center gap-1.5 rounded-full bg-kolo-green/10 px-2.5 py-1 text-[10px] font-extrabold text-kolo-green uppercase tracking-wider">
-              <Sparkles size={10} className="fill-kolo-green/20" />
-              <span>Kolo Insight</span>
+            <div className="flex items-center justify-between">
+              <div className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[10px] font-extrabold uppercase tracking-wider ${
+                activeInsight.type === "warning"
+                  ? "bg-rose-500/15 text-rose-400 border border-rose-950/30"
+                  : activeInsight.type === "suggestion"
+                  ? "bg-sky-500/15 text-sky-400 border border-sky-950/30"
+                  : "bg-kolo-green/15 text-kolo-green border border-emerald-950/30"
+              }`}>
+                <Sparkles size={10} className={activeInsight.type === "warning" ? "fill-rose-400/20" : activeInsight.type === "suggestion" ? "fill-sky-400/20" : "fill-kolo-green/20"} />
+                <span>Kolo {activeInsight.type === "warning" ? "Warning" : activeInsight.type === "suggestion" ? "Tip" : "Insight"}</span>
+              </div>
+
+              {/* Navigation chevrons */}
+              {insights.length > 1 && (
+                <div className="flex items-center gap-1 relative z-10">
+                  <button
+                    onClick={handlePrevInsight}
+                    className="p-1 rounded-full text-slate-500 hover:text-white hover:bg-slate-800/40 transition-all cursor-pointer"
+                    title="Previous Insight"
+                  >
+                    <ChevronLeft size={14} />
+                  </button>
+                  <button
+                    onClick={handleNextInsight}
+                    className="p-1 rounded-full text-slate-500 hover:text-white hover:bg-slate-800/40 transition-all cursor-pointer"
+                    title="Next Insight"
+                  >
+                    <ChevronRight size={14} />
+                  </button>
+                </div>
+              )}
             </div>
+
             <h3 className="text-base font-bold text-white mt-4 leading-snug">
-              Transport spending increased by 18% this month.
+              {activeInsight.title}
             </h3>
             <p className="text-[11px] text-slate-300 mt-2 leading-relaxed font-normal">
-              You spent ₦31,950 on Uber and Bolt — mostly weekday morning rides. Try batching errands on Saturdays to save up to ₦8k next month.
+              {activeInsight.description}
             </p>
           </div>
-          <button 
-            onClick={() => setActiveTab("transactions")}
-            className="flex items-center gap-1 text-[11px] font-semibold text-kolo-green hover:text-kolo-green-hover transition-all mt-6 group text-left"
-          >
-            <span>See transport breakdown</span>
-            <ArrowUpRight size={12} className="transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
-          </button>
+
+          <div className="mt-6 flex flex-col gap-3">
+            {/* Pagination Indicators */}
+            {insights.length > 1 && (
+              <div className="flex gap-1">
+                {insights.map((_, idx) => (
+                  <button
+                    key={idx}
+                    onClick={() => setCurrentInsightIdx(idx)}
+                    className={`h-1 rounded-full transition-all cursor-pointer ${
+                      idx === currentInsightIdx ? "w-4 bg-kolo-green" : "w-1.5 bg-slate-700"
+                    }`}
+                  />
+                ))}
+              </div>
+            )}
+
+            <button 
+              onClick={() => setActiveTab("ai-assistant")}
+              className="flex items-center gap-1 text-[11px] font-semibold text-kolo-green hover:text-kolo-green-hover transition-all group text-left w-fit cursor-pointer"
+            >
+              <span>{activeInsight.actionText || "Chat with AI Assistant"}</span>
+              <ArrowUpRight size={12} className="transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
+            </button>
+          </div>
         </div>
       </motion.div>
 

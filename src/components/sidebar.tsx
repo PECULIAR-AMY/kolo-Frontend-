@@ -14,6 +14,7 @@ export default function Sidebar({ isOpen, setIsOpen }: { isOpen: boolean; setIsO
     { id: "dashboard", label: "Dashboard", icon: LayoutDashboard },
     { id: "transactions", label: "Transactions", icon: ArrowLeftRight },
     { id: "import", label: "Import CSV", icon: FileDown },
+    { id: "ai-assistant", label: "Kolo AI", icon: Sparkles },
   ] as const;
 
   const initials = user?.name
@@ -112,17 +113,23 @@ export default function Sidebar({ isOpen, setIsOpen }: { isOpen: boolean; setIsO
 
         {/* KOLO AI Bottom Card */}
         <div className="p-4">
-          <div className="rounded-2xl bg-slate-900/60 border border-slate-800/60 p-4 shadow-xl">
+          <button
+            onClick={() => {
+              setActiveTab("ai-assistant");
+              setIsOpen(false);
+            }}
+            className="w-full text-left rounded-2xl bg-slate-900/60 border border-slate-800/60 p-4 shadow-xl hover:border-kolo-green/30 transition-all cursor-pointer group block"
+          >
             <div className="flex items-center gap-2 mb-2">
-              <div className="rounded-md bg-kolo-green/10 p-1 text-kolo-green">
-                <Sparkles size={14} className="fill-kolo-green/20" />
+              <div className="rounded-md bg-kolo-green/10 p-1 text-kolo-green group-hover:bg-kolo-green group-hover:text-kolo-dark transition-all">
+                <Sparkles size={14} className="fill-kolo-green/20 group-hover:fill-transparent" />
               </div>
               <span className="text-xs font-semibold tracking-wider text-kolo-green uppercase">Kolo AI</span>
             </div>
-            <p className="text-[11px] leading-relaxed text-slate-400">
-              Connect more accounts to unlock smarter spending insights and custom budgets.
+            <p className="text-[11px] leading-relaxed text-slate-400 group-hover:text-slate-200 transition-all">
+              Chat with your AI Assistant to unlock custom budgets, saving tips, and deep financial breakdowns.
             </p>
-          </div>
+          </button>
         </div>
 
         {/* User Profile Section */}

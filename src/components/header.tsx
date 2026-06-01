@@ -61,6 +61,20 @@ export default function Header({
             </button>
           ),
         };
+      case "ai-assistant":
+        return {
+          breadcrumb: "Interactive copilot",
+          title: "Kolo AI Assistant",
+          action: (
+            <button
+              onClick={() => setActiveTab("dashboard")}
+              className="flex items-center gap-1.5 rounded-full border border-slate-200 bg-white px-4 py-2 text-xs font-semibold text-slate-800 transition-all hover:bg-slate-50 active:scale-95"
+            >
+              <LayoutDashboard size={14} className="text-slate-500" />
+              <span>Back to Dashboard</span>
+            </button>
+          ),
+        };
     }
   };
  
