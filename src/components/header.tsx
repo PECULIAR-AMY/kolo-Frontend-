@@ -3,7 +3,8 @@
 import React from "react";
 import { useFinance } from "@/context/finance-context";
 import { useAuth } from "@/context/auth-context";
-import { ArrowUpRight, Plus, LayoutDashboard, Menu } from "lucide-react";
+import { ArrowUpRight, Plus, LayoutDashboard, Menu, Sun, Moon } from "lucide-react";
+import { useTheme } from "@/context/theme-context";
 
 export default function Header({
   onMenuClick,
@@ -14,6 +15,7 @@ export default function Header({
 }) {
   const { activeTab, setActiveTab, totalExpenses, totalIncome } = useFinance();
   const { user } = useAuth();
+  const { theme, toggleTheme } = useTheme();
  
   const getHeaderInfo = () => {
     switch (activeTab) {
@@ -25,7 +27,7 @@ export default function Header({
           action: (
             <button
               onClick={() => setActiveTab("transactions")}
-              className="flex items-center gap-1.5 rounded-full border border-slate-200 bg-white px-4 py-2 text-xs font-semibold text-slate-800 transition-all hover:bg-slate-50 active:scale-95"
+              className="flex items-center gap-1.5 rounded-full border border-slate-200 bg-white px-4 py-2 text-xs font-semibold text-slate-800 transition-all hover:bg-slate-50 active:scale-95 cursor-pointer"
             >
               <span>View all transactions</span>
               <ArrowUpRight size={14} className="text-slate-500" />
@@ -54,7 +56,7 @@ export default function Header({
           action: (
             <button
               onClick={() => setActiveTab("dashboard")}
-              className="flex items-center gap-1.5 rounded-full border border-slate-200 bg-white px-4 py-2 text-xs font-semibold text-slate-800 transition-all hover:bg-slate-50 active:scale-95"
+              className="flex items-center gap-1.5 rounded-full border border-slate-200 bg-white px-4 py-2 text-xs font-semibold text-slate-800 transition-all hover:bg-slate-50 active:scale-95 cursor-pointer"
             >
               <LayoutDashboard size={14} className="text-slate-500" />
               <span>Back to Dashboard</span>
@@ -68,7 +70,7 @@ export default function Header({
           action: (
             <button
               onClick={() => setActiveTab("dashboard")}
-              className="flex items-center gap-1.5 rounded-full border border-slate-200 bg-white px-4 py-2 text-xs font-semibold text-slate-800 transition-all hover:bg-slate-50 active:scale-95"
+              className="flex items-center gap-1.5 rounded-full border border-slate-200 bg-white px-4 py-2 text-xs font-semibold text-slate-800 transition-all hover:bg-slate-50 active:scale-95 cursor-pointer"
             >
               <LayoutDashboard size={14} className="text-slate-500" />
               <span>Back to Dashboard</span>
@@ -86,7 +88,7 @@ export default function Header({
         {/* Mobile menu toggle */}
         <button
           onClick={onMenuClick}
-          className="rounded-lg p-1.5 text-slate-500 hover:bg-slate-100 md:hidden"
+          className="rounded-lg p-1.5 text-slate-500 hover:bg-slate-100 md:hidden cursor-pointer"
         >
           <Menu size={20} />
         </button>
@@ -96,7 +98,22 @@ export default function Header({
           <h1 className="text-2xl md:text-3xl font-black tracking-tight text-slate-950 mt-1">{info.title}</h1>
         </div>
       </div>
-      <div>{info.action}</div>
+      
+      <div className="flex items-center gap-3">
+        <div>{info.action}</div>
+        <button
+          onClick={toggleTheme}
+          className="flex h-9 w-9 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-500 hover:text-slate-900 hover:bg-slate-50 active:scale-90 transition-all cursor-pointer shadow-3xs shrink-0"
+          title={theme === "light" ? "Switch to Dark Mode" : "Switch to Light Mode"}
+          aria-label="Toggle theme"
+        >
+          {theme === "light" ? (
+            <Moon size={16} />
+          ) : (
+            <Sun size={16} className="text-amber-400 fill-amber-400/20" />
+          )}
+        </button>
+      </div>
     </header>
   );
 }

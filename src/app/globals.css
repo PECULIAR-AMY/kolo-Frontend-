@@ -5,29 +5,89 @@
   --color-kolo-green-hover: #91d22b;
   --color-kolo-dark: #0B121F;
   --color-kolo-slate: #0e1622;
-  --color-kolo-light: #FAF9F6;
+  
+  --color-kolo-light: var(--kolo-light);
+  --color-white: var(--card-bg);
   
   --color-kuda-text: #d500f9;
-  --color-kuda-bg: #fdf0ff;
+  --color-kuda-bg: var(--kuda-bg);
   --color-gtbank-text: #e65100;
-  --color-gtbank-bg: #fff1e6;
+  --color-gtbank-bg: var(--gtbank-bg);
   --color-opay-text: #00bfa5;
-  --color-opay-bg: #e0fcf7;
+  --color-opay-bg: var(--opay-bg);
   --color-palmpay-text: #6200ea;
-  --color-palmpay-bg: #f0ebff;
+  --color-palmpay-bg: var(--palmpay-bg);
   --color-moniepoint-text: #0284c7;
-  --color-moniepoint-bg: #f0f9ff;
+  --color-moniepoint-bg: var(--moniepoint-bg);
+
+  /* Map Tailwind slate colors dynamically to resolve dark themes */
+  --color-slate-50: var(--slate-50);
+  --color-slate-100: var(--slate-100);
+  --color-slate-200: var(--slate-200);
+  --color-slate-300: var(--slate-300);
+  --color-slate-400: var(--slate-400);
+  --color-slate-500: var(--slate-500);
+  --color-slate-600: var(--slate-600);
+  --color-slate-800: var(--slate-800);
+  --color-slate-900: var(--slate-900);
+  --color-slate-950: var(--slate-950);
 }
 
 :root {
   --background: #FAF9F6;
-  --foreground: #111827;
+  --foreground: #1e293b;
+  
+  --kolo-light: #FAF9F6;
+  --card-bg: #ffffff;
+  
+  --slate-50: #f8fafc;
+  --slate-100: #f1f5f9;
+  --slate-200: #e2e8f0;
+  --slate-300: #cbd5e1;
+  --slate-400: #94a3b8;
+  --slate-500: #64748b;
+  --slate-600: #475569;
+  --slate-800: #1e293b;
+  --slate-900: #0f172a;
+  --slate-950: #020617;
+  
+  --kuda-bg: #fdf0ff;
+  --gtbank-bg: #fff1e6;
+  --opay-bg: #e0fcf7;
+  --palmpay-bg: #f0ebff;
+  --moniepoint-bg: #f0f9ff;
+}
+
+.dark {
+  --background: #0B121F;
+  --foreground: #f8fafc;
+  
+  --kolo-light: #0B121F;
+  --card-bg: #121B2D;
+  
+  --slate-50: #0f172a;
+  --slate-100: #1e293b;
+  --slate-200: #334155;
+  --slate-300: #475569;
+  --slate-400: #64748b;
+  --slate-500: #94a3b8;
+  --slate-600: #cbd5e1;
+  --slate-800: #cbd5e1;
+  --slate-900: #f8fafc;
+  --slate-950: #ffffff;
+  
+  --kuda-bg: rgba(213, 0, 249, 0.12);
+  --gtbank-bg: rgba(230, 81, 0, 0.12);
+  --opay-bg: rgba(0, 191, 165, 0.12);
+  --palmpay-bg: rgba(98, 0, 234, 0.12);
+  --moniepoint-bg: rgba(2, 132, 199, 0.12);
 }
 
 body {
   background-color: var(--background);
   color: var(--foreground);
   font-feature-settings: "cv02", "cv03", "cv04", "cv11";
+  transition: background-color 0.25s ease, border-color 0.25s ease, color 0.25s ease;
 }
 
 /* Custom Scrollbar for premium feel */
@@ -41,11 +101,10 @@ body {
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #cbd5e1;
+  background: var(--slate-300);
   border-radius: 4px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #94a3b8;
+  background: var(--slate-400);
 }
-
