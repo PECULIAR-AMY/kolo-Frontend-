@@ -3,6 +3,7 @@
 import React from "react";
 import { useFinance, Transaction } from "@/context/finance-context";
 import { generateAIInsights } from "@/utils/ai-engine";
+import { detectRecurringTransactions, RecurringItem } from "@/utils/recurring-engine";
 import SpendingTrend from "./spending-trend";
 import { motion } from "framer-motion";
 import { 
@@ -21,7 +22,9 @@ import {
   Sparkles,
   CreditCard,
   ChevronLeft,
-  ChevronRight
+  ChevronRight,
+  Tv,
+  Coins
 } from "lucide-react";
 
 // Helper to get transaction category icon
@@ -95,6 +98,11 @@ export default function DashboardView() {
     e.stopPropagation();
     setCurrentInsightIdx((prev) => (prev - 1 + insights.length) % insights.length);
   };
+
+  const recurringItems = React.useMemo(() => detectRecurringTransactions(transactions), [transactions]);
+  const upcomingRecurring = React.useMemo(() => {
+    return recurringItems.filter(item => item.daysRemaining >= 0 && item.daysRemaining <= 14);
+  }, [recurringItems]);
 
   const containerVariants = {
     hidden: { opacity: 0 },
@@ -267,6 +275,102 @@ export default function DashboardView() {
               <ArrowUpRight size={12} className="transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
             </button>
           </div>
+        </div>
+      </motion.div>
+
+      {/* Upcoming Recurring Expenses Widget */}
+      <motion.div variants={itemVariants} className="grid grid-cols-1 gap-6">
+        <div className="rounded-2xl bg-gradient-to-br from-[#090f0c] via-[#050907] to-[#020403] border border-emerald-950/40 p-6 shadow-xl relative overflow-hidden text-white">
+          {/* Subtle Glow Overlay */}
+          <div className="absolute top-0 right-0 h-48 w-48 rounded-full bg-emerald-500/5 blur-[80px]" />
+          <div className="absolute bottom-0 left-10 h-32 w-32 rounded-full bg-kolo-green/5 blur-[60px]" />
+
+          <div className="flex items-center justify-between mb-5 relative z-10">
+            <div>
+              <h2 className="text-md font-extrabold text-white tracking-tight">Upcoming bills & transfers</h2>
+              <p className="text-xs text-slate-400 mt-0.5">Recurring outflows predicted in the next 14 days</p>
+            </div>
+            <div className="flex items-center gap-1.5 rounded-full bg-kolo-green/10 border border-emerald-500/20 px-3 py-1 text-[10px] font-extrabold text-kolo-green uppercase tracking-wider">
+              <span className="h-1.5 w-1.5 rounded-full bg-kolo-green animate-pulse" />
+              <span>Smart Engine Active</span>
+            </div>
+          </div>
+
+          {upcomingRecurring.length === 0 ? (
+            <p className="text-xs text-slate-500 py-8 text-center relative z-10">No recurring bills due in the next 14 days.</p>
+          ) : (
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4 relative z-10">
+              {upcomingRecurring.map((item) => {
+                const isUrgent = item.daysRemaining <= 2;
+                return (
+                  <div 
+                    key={item.id} 
+                    className={`relative rounded-xl border p-4 transition-all duration-300 flex flex-col justify-between min-h-[125px] group ${
+                      isUrgent
+                        ? "border-rose-500/30 bg-gradient-to-br from-rose-950/15 via-slate-900/60 to-slate-950/80 shadow-[0_0_20px_-5px_rgba(244,63,94,0.15)] hover:border-rose-500/50"
+                        : "border-slate-800/80 bg-gradient-to-br from-slate-900/80 via-slate-900/50 to-slate-950/90 hover:border-emerald-500/30 hover:shadow-[0_0_20px_-5px_rgba(0,230,118,0.1)]"
+                    }`}
+                  >
+                    <div className="flex items-start justify-between gap-1.5">
+                      <div className="flex items-center gap-2.5">
+                        {/* Custom Visual Icons */}
+                        <div className={`flex h-8.5 w-8.5 shrink-0 items-center justify-center rounded-full bg-slate-950 border transition-all duration-300 ${
+                          isUrgent ? "border-rose-500/20 text-rose-400 group-hover:scale-105" : "border-slate-800 text-slate-300 group-hover:border-emerald-500/20 group-hover:scale-105"
+                        }`}>
+                          {item.title.toLowerCase().includes("mtn") ? (
+                            <Smartphone size={13} className="text-amber-400" />
+                          ) : item.title.toLowerCase().includes("netflix") ? (
+                            <Tv size={13} className="text-rose-400" />
+                          ) : item.title.toLowerCase().includes("spotify") ? (
+                            <Tv size={13} className="text-emerald-400" />
+                          ) : item.title.toLowerCase().includes("chatgpt") ? (
+                            <Sparkles size={13} className="text-purple-400" />
+                          ) : (
+                            <Coins size={13} className="text-slate-400" />
+                          )}
+                        </div>
+                        <div className="flex flex-col min-w-0">
+                          <span className="text-xs font-bold text-slate-100 truncate leading-tight group-hover:text-white transition-colors">{item.title}</span>
+                          <span className={`rounded px-1.5 py-0.2 text-[8px] font-extrabold tracking-wider uppercase w-fit mt-1.5 border border-slate-800/80 ${
+                            item.bank === "GTBANK" ? "bg-orange-500/10 text-orange-400 border-orange-950/30" : 
+                            item.bank === "KUDA" ? "bg-purple-500/10 text-purple-400 border-purple-950/30" :
+                            "bg-emerald-500/10 text-kolo-green border-emerald-950/30"
+                          }`}>
+                            {item.bank}
+                          </span>
+                        </div>
+                      </div>
+                      <span className={`rounded-full px-2 py-0.5 text-[9px] font-extrabold shrink-0 tracking-wide uppercase ${
+                        isUrgent
+                          ? "bg-rose-500/15 text-rose-400 border border-rose-950/30 animate-pulse"
+                          : item.daysRemaining <= 7
+                          ? "bg-amber-500/15 text-amber-400 border border-amber-950/30"
+                          : "bg-slate-800/60 text-slate-400 border border-slate-900"
+                      }`}>
+                        {item.daysRemaining === 0
+                          ? "Due today"
+                          : item.daysRemaining === 1
+                          ? "Due tomorrow"
+                          : `In ${item.daysRemaining} days`}
+                      </span>
+                    </div>
+                    <div className="mt-4 flex items-end justify-between border-t border-slate-800/60 pt-2.5 shrink-0">
+                      <div className="flex flex-col">
+                        <span className="text-[8px] text-slate-500 font-bold uppercase tracking-widest">Estimated</span>
+                        <span className="text-xs font-black text-white mt-0.5 font-sans">₦{item.amount.toLocaleString("en-NG")}</span>
+                      </div>
+                      <button
+                        onClick={() => setActiveTab("ai-assistant")}
+                        className="text-[9px] font-extrabold text-kolo-green hover:text-kolo-green-hover transition-colors cursor-pointer group-hover:translate-x-0.5 transition-transform"
+                      >
+                        Adjust bill →
+                      </button>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
         </div>
       </motion.div>
 

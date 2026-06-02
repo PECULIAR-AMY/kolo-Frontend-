@@ -3,6 +3,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import { useFinance } from "@/context/finance-context";
 import { generateAIInsights, AIInsight } from "@/utils/ai-engine";
+import { detectRecurringTransactions, RecurringItem } from "@/utils/recurring-engine";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Sparkles,
@@ -29,7 +30,7 @@ interface Message {
   text: string;
   timestamp: Date;
   richContent?: {
-    type: "comparison" | "checklist" | "analysis" | "warnings";
+    type: "comparison" | "checklist" | "analysis" | "warnings" | "recurring";
     data: any;
   };
 }
@@ -71,6 +72,7 @@ What would you like to explore today?`,
 
   const quickPrompts = [
     { label: "📊 Analyze my spending", query: "Analyze my spending this month" },
+    { label: "📅 Upcoming subscriptions", query: "What are my upcoming subscriptions and bills?" },
     { label: "⚠️ Check overspending warnings", query: "Do I have any overspending warnings?" },
     { label: "💡 Custom savings suggestions", query: "Give me savings suggestions" },
     { label: "🚗 Compare Bolt vs. Food", query: "Compare Bolt vs Food & Dining" },
@@ -79,6 +81,35 @@ What would you like to explore today?`,
   // local engine to respond to questions
   const getAIResponse = (query: string): Omit<Message, "id" | "timestamp"> => {
     const q = query.toLowerCase();
+
+    // 0. SMART RECURRING DETECTION & BILLING SCHEDULE
+    if (q.includes("upcoming") || q.includes("recurring") || q.includes("subscription") || q.includes("bill") || q.includes("renew") || q.includes("netflix") || q.includes("spotify") || q.includes("mtn") || q.includes("chatgpt")) {
+      const items = detectRecurringTransactions(transactions);
+      const upcoming = items.filter(item => item.daysRemaining >= 0 && item.daysRemaining <= 30);
+
+      if (upcoming.length === 0) {
+        return {
+          sender: "ai",
+          text: "🔍 **No upcoming subscriptions detected.** I audited your active history but didn't identify any recurring billing patterns due in the next 30 days. You can import more transaction history to trigger automated cycle prediction!",
+        };
+      }
+
+      const totalDue = upcoming.reduce((sum, item) => sum + item.amount, 0);
+
+      return {
+        sender: "ai",
+        text: `📅 **Smart Billing Audit.** I scanned your history and identified **${upcoming.length} active recurring expenses** due in the next 30 days. You will need a total budget buffer of **₦${totalDue.toLocaleString("en-NG")}** to cover these upcoming withdrawals.
+
+Here is your visual June 2026 payment calendar roadmap:`,
+        richContent: {
+          type: "recurring",
+          data: {
+            items: upcoming,
+            totalDue,
+          }
+        }
+      };
+    }
 
     // 1. COMPARISON: Bolt vs Food
     if (q.includes("bolt") || q.includes("food") || q.includes("compare")) {
@@ -472,6 +503,102 @@ Try selecting one of the quick prompts below to get started!`,
                               🎉 Excellent goal! You will save ₦{totalCalculatedSavings(msg.richContent.data.items).toLocaleString("en-NG")} next month!
                             </motion.div>
                           )}
+                        </div>
+                      )}
+
+                      {/* Rich Content Type: Recurring Subscriptions Roadmap (fintech behavior) */}
+                      {msg.richContent.type === "recurring" && (
+                        <div className="rounded-xl border border-emerald-950 bg-[#050a07] p-4 space-y-4 font-sans text-white relative overflow-hidden shadow-xl">
+                          <div className="absolute top-0 right-0 h-32 w-32 rounded-full bg-emerald-500/5 blur-[50px] pointer-events-none" />
+
+                          <div className="flex justify-between items-center bg-slate-900/60 backdrop-blur-md px-3.5 py-2.5 rounded-lg border border-emerald-950 shadow-xs">
+                            <div className="flex flex-col">
+                              <span className="text-[9px] font-bold uppercase tracking-widest text-emerald-400">Total Monthly Outflow</span>
+                              <span className="text-sm font-black text-white mt-1">
+                                ₦{msg.richContent.data.totalDue.toLocaleString("en-NG")}
+                              </span>
+                            </div>
+                            <span className="text-[9px] font-extrabold bg-emerald-500/10 border border-emerald-500/20 px-2 py-0.5 rounded text-kolo-green uppercase tracking-wider">
+                              June 2026
+                            </span>
+                          </div>
+
+                          {/* Horizontal Timeline Visualization */}
+                          <div className="space-y-1 bg-slate-900/40 border border-slate-900 p-3.5 rounded-lg relative overflow-hidden">
+                            <div className="text-[9px] uppercase font-bold text-slate-400 mb-2">June Payment Roadmap</div>
+                            
+                            {/* Visual Timeline Track */}
+                            <div className="relative h-12 flex items-center justify-between border-t border-slate-800/50 pt-2 px-1 mt-2">
+                              {/* Horizontal Line */}
+                              <div className="absolute top-5 left-1 right-1 h-0.5 bg-slate-800" />
+                              
+                              {/* Standard Timeline dates markers */}
+                              <span className="absolute top-8 left-1 text-[8px] font-bold text-slate-500">June 1</span>
+                              <span className="absolute top-8 left-[33%] text-[8px] font-bold text-slate-500">June 10</span>
+                              <span className="absolute top-8 left-[66%] text-[8px] font-bold text-slate-500">June 20</span>
+                              <span className="absolute top-8 right-1 text-[8px] font-bold text-slate-500">June 30</span>
+
+                              {/* Map icons dynamically on their due days */}
+                              {msg.richContent.data.items.map((item: any, idx: number) => {
+                                const dueDate = new Date(item.nextDueDate);
+                                const dayOfMonth = dueDate.getDate();
+                                // Calculate percentage position along June (1 to 30)
+                                const percent = ((dayOfMonth - 1) / 29) * 90 + 5; // bound position to 5% - 95%
+                                
+                                return (
+                                  <div
+                                    key={idx}
+                                    className="absolute -top-1 flex flex-col items-center group cursor-help transition-all duration-300"
+                                    style={{ left: `${percent}%` }}
+                                    title={`${item.title} - ₦${item.amount.toLocaleString("en-NG")} on June ${dayOfMonth}`}
+                                  >
+                                    <div className="w-5 h-5 rounded-full bg-slate-950 text-kolo-green flex items-center justify-center text-[8px] font-black shadow-xs border border-emerald-500/40 hover:border-kolo-green hover:scale-115 transition-all duration-300 animate-pulse">
+                                      {item.title.toLowerCase().includes("netflix") ? "N" : item.title.toLowerCase().includes("spotify") ? "S" : item.title.toLowerCase().includes("chatgpt") ? "C" : item.title.toLowerCase().includes("mtn") ? "M" : "T"}
+                                    </div>
+                                    <span className="text-[7px] font-black text-slate-400 mt-1">
+                                      {dayOfMonth}
+                                    </span>
+                                  </div>
+                                );
+                              })}
+                            </div>
+                          </div>
+
+                          {/* List of items */}
+                          <div className="space-y-2 pt-1">
+                            {msg.richContent.data.items.map((item: any) => {
+                              const isUrgent = item.daysRemaining <= 2;
+                              return (
+                                <div key={item.id} className={`flex items-center justify-between p-2.5 rounded-lg border transition-all duration-300 ${
+                                  isUrgent 
+                                    ? "bg-rose-950/15 border-rose-950/50 hover:border-rose-500/40" 
+                                    : "bg-slate-900/40 border-slate-900/60 hover:border-emerald-950/60"
+                                }`}>
+                                  <div className="flex items-center gap-2.5">
+                                    <div className={`w-1.5 h-1.5 rounded-full shrink-0 ${
+                                      isUrgent ? "bg-rose-500 animate-pulse" : item.daysRemaining <= 7 ? "bg-amber-500" : "bg-emerald-500"
+                                    }`} />
+                                    <div className="flex flex-col min-w-0">
+                                      <span className="text-xs font-bold text-slate-100 truncate">{item.title}</span>
+                                      <span className="text-[9px] text-slate-500 mt-0.5">
+                                        Last paid: {new Date(item.lastDate).toLocaleDateString("en-US", { month: "short", day: "numeric" })}
+                                      </span>
+                                    </div>
+                                  </div>
+                                  <div className="flex flex-col items-end shrink-0">
+                                    <span className="text-xs font-black text-slate-100">
+                                      ₦{item.amount.toLocaleString("en-NG")}
+                                    </span>
+                                    <span className={`text-[8px] font-extrabold uppercase mt-0.5 tracking-wider ${
+                                      isUrgent ? "text-rose-400 animate-pulse" : "text-slate-400"
+                                    }`}>
+                                      {item.daysRemaining === 0 ? "Due today" : item.daysRemaining === 1 ? "Due tomorrow" : `Due in ${item.daysRemaining} days`}
+                                    </span>
+                                  </div>
+                                </div>
+                              );
+                            })}
+                          </div>
                         </div>
                       )}
                     </div>
