@@ -9,6 +9,17 @@ interface ChartData {
 }
 
 export default function SpendingTrend({ data }: { data: ChartData[] }) {
+  const [isMobile, setIsMobile] = React.useState(false);
+
+  React.useEffect(() => {
+    const handleResize = () => {
+      setIsMobile(window.innerWidth < 640);
+    };
+    handleResize();
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
+
   // Format Naira values for Y-axis
   const formatYAxis = (value: number) => {
     if (value === 0) return "₦0k";
@@ -31,7 +42,7 @@ export default function SpendingTrend({ data }: { data: ChartData[] }) {
   };
 
   return (
-    <div className="h-64 w-full md:h-72">
+    <div className="h-64 w-full md:h-72 select-none" style={{ touchAction: "pan-y" }}>
       <ResponsiveContainer width="100%" height="100%">
         <AreaChart
           data={data}
@@ -54,8 +65,7 @@ export default function SpendingTrend({ data }: { data: ChartData[] }) {
             tickLine={false}
             tick={{ fill: "#94a3b8", fontSize: 10 }}
             dy={10}
-            // Skip 8 to match the screenshot
-            ticks={[2, 3, 4, 5, 6, 7, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28]}
+            ticks={isMobile ? [1, 7, 14, 21, 28] : [2, 5, 10, 15, 20, 25, 28]}
           />
           <YAxis
             axisLine={false}

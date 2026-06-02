@@ -176,7 +176,7 @@ export default function ImportCsvView() {
   };
 
   return (
-    <div className="px-6 py-6 md:px-10 max-w-6xl mx-auto space-y-6">
+    <div className="px-4 py-4 md:px-10 md:py-6 max-w-6xl mx-auto space-y-6">
       
       {/* Invisible File Input */}
       <input
@@ -447,9 +447,9 @@ export default function ImportCsvView() {
               </div>
 
               {/* Data Preview Table Panel */}
-              <div className="lg:col-span-2 rounded-3xl bg-white border border-slate-100 p-6 shadow-sm flex flex-col h-[560px]">
+              <div className="lg:col-span-2 rounded-3xl bg-white border border-slate-100 p-4 sm:p-6 shadow-sm flex flex-col h-[400px] sm:h-[560px]">
                 <h3 className="text-xs font-black text-slate-900 uppercase tracking-wider mb-2">Statement Data Preview</h3>
-                <p className="text-xs text-slate-400 font-semibold mb-5">Preview parsed row data contents from the CSV file.</p>
+                <p className="text-[11px] sm:text-xs text-slate-400 font-semibold mb-4 sm:mb-5">Preview parsed row data contents from the CSV file.</p>
 
                 <div className="flex-1 overflow-auto border border-slate-100 rounded-2xl">
                   <table className="w-full text-left border-collapse text-[11px] text-slate-650">

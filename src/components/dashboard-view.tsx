@@ -127,68 +127,68 @@ export default function DashboardView() {
       className="space-y-6 px-6 py-6 md:px-10"
     >
       {/* 4 Stats Cards */}
-      <motion.div variants={itemVariants} className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      <motion.div variants={itemVariants} className="grid grid-cols-2 gap-3 md:gap-4 sm:grid-cols-2 lg:grid-cols-4">
         {/* Card 1: Income */}
-        <div className="rounded-2xl bg-kolo-dark border border-slate-800/40 p-5 text-white shadow-sm flex flex-col justify-between min-h-[140px]">
+        <div className="rounded-2xl bg-kolo-dark border border-slate-800/40 p-4 sm:p-5 text-white shadow-sm flex flex-col justify-between min-h-[120px] sm:min-h-[140px]">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Income</span>
-            <span className="flex items-center gap-0.5 rounded-full bg-emerald-500/10 px-2 py-0.5 text-[10px] font-bold text-emerald-400">
+            <span className="text-[10px] sm:text-xs font-semibold text-slate-400 uppercase tracking-wider">Income</span>
+            <span className="flex items-center gap-0.5 rounded-full bg-emerald-500/10 px-1.5 py-0.5 text-[8px] sm:text-[10px] font-bold text-emerald-400">
               <TrendingUp size={10} />
               <span>12.4%</span>
             </span>
           </div>
-          <div className="mt-4">
-            <span className="text-2xl font-black md:text-3xl font-sans">
+          <div className="mt-2 sm:mt-4">
+            <span className="text-lg sm:text-2xl md:text-3xl font-black font-sans">
               ₦{totalIncome.toLocaleString("en-NG")}
             </span>
-            <p className="mt-1 text-[11px] text-slate-400">2 sources</p>
+            <p className="mt-0.5 sm:mt-1 text-[9px] sm:text-[11px] text-slate-400">2 sources</p>
           </div>
         </div>
 
         {/* Card 2: Expenses */}
-        <div className="rounded-2xl bg-white border border-slate-100 p-5 text-slate-800 shadow-sm flex flex-col justify-between min-h-[140px]">
+        <div className="rounded-2xl bg-white border border-slate-100 p-4 sm:p-5 text-slate-800 shadow-sm flex flex-col justify-between min-h-[120px] sm:min-h-[140px]">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Expenses</span>
-            <span className="flex items-center gap-0.5 rounded-full bg-rose-500/10 px-2 py-0.5 text-[10px] font-bold text-rose-500">
+            <span className="text-[10px] sm:text-xs font-semibold text-slate-400 uppercase tracking-wider">Expenses</span>
+            <span className="flex items-center gap-0.5 rounded-full bg-rose-500/10 px-1.5 py-0.5 text-[8px] sm:text-[10px] font-bold text-rose-500">
               <TrendingDown size={10} />
               <span>6.2%</span>
             </span>
           </div>
-          <div className="mt-4">
-            <span className="text-2xl font-black md:text-3xl font-sans">
+          <div className="mt-2 sm:mt-4">
+            <span className="text-lg sm:text-2xl md:text-3xl font-black font-sans">
               ₦{totalExpenses.toLocaleString("en-NG")}
             </span>
-            <p className="mt-1 text-[11px] text-slate-400">42 transactions</p>
+            <p className="mt-0.5 sm:mt-1 text-[9px] sm:text-[11px] text-slate-400">42 transactions</p>
           </div>
         </div>
 
         {/* Card 3: Savings rate */}
-        <div className="rounded-2xl bg-kolo-green p-5 text-kolo-dark shadow-sm flex flex-col justify-between min-h-[140px]">
+        <div className="rounded-2xl bg-kolo-green p-4 sm:p-5 text-kolo-dark shadow-sm flex flex-col justify-between min-h-[120px] sm:min-h-[140px]">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-bold text-kolo-dark/70 uppercase tracking-wider">Savings rate</span>
-            <span className="flex items-center gap-0.5 rounded-full bg-kolo-dark/10 px-2 py-0.5 text-[10px] font-extrabold text-kolo-dark">
+            <span className="text-[10px] sm:text-xs font-bold text-kolo-dark/70 uppercase tracking-wider">Savings</span>
+            <span className="flex items-center gap-0.5 rounded-full bg-kolo-dark/10 px-1.5 py-0.5 text-[8px] sm:text-[10px] font-extrabold text-kolo-dark">
               <TrendingUp size={10} />
-              <span>{savingsRate.toFixed(1)}%</span>
+              <span>{savingsRate.toFixed(0)}%</span>
             </span>
           </div>
-          <div className="mt-4">
-            <span className="text-2xl font-black md:text-3xl font-sans">
+          <div className="mt-2 sm:mt-4">
+            <span className="text-lg sm:text-2xl md:text-3xl font-black font-sans">
               ₦{savingsAmount.toLocaleString("en-NG")}
             </span>
-            <p className="mt-1 text-[11px] font-medium text-kolo-dark/70">{savingsRate.toFixed(1)}% of income</p>
+            <p className="mt-0.5 sm:mt-1 text-[9px] sm:text-[11px] font-medium text-kolo-dark/70">{savingsRate.toFixed(0)}% rate</p>
           </div>
         </div>
 
         {/* Card 4: Top Category */}
-        <div className="rounded-2xl bg-white border border-slate-100 p-5 text-slate-800 shadow-sm flex flex-col justify-between min-h-[140px]">
+        <div className="rounded-2xl bg-white border border-slate-100 p-4 sm:p-5 text-slate-800 shadow-sm flex flex-col justify-between min-h-[120px] sm:min-h-[140px]">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Top category</span>
+            <span className="text-[10px] sm:text-xs font-semibold text-slate-400 uppercase tracking-wider">Top category</span>
           </div>
-          <div className="mt-4">
-            <span className="text-2xl font-black md:text-3xl font-sans">
+          <div className="mt-2 sm:mt-4">
+            <span className="text-lg sm:text-2xl md:text-3xl font-black font-sans">
               ₦{topCategoryAmount.toLocaleString("en-NG")}
             </span>
-            <p className="mt-1 text-[11px] text-slate-400">{topCategoryName}</p>
+            <p className="mt-0.5 sm:mt-1 text-[9px] sm:text-[11px] text-slate-400 truncate">{topCategoryName}</p>
           </div>
         </div>
       </motion.div>
@@ -299,13 +299,13 @@ export default function DashboardView() {
           {upcomingRecurring.length === 0 ? (
             <p className="text-xs text-slate-500 py-8 text-center relative z-10">No recurring bills due in the next 14 days.</p>
           ) : (
-            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4 relative z-10">
+            <div className="grid grid-cols-2 gap-3 md:gap-4 sm:grid-cols-2 lg:grid-cols-4 relative z-10">
               {upcomingRecurring.map((item) => {
                 const isUrgent = item.daysRemaining <= 2;
                 return (
                   <div 
                     key={item.id} 
-                    className={`relative rounded-xl border p-4 transition-all duration-300 flex flex-col justify-between min-h-[125px] group ${
+                    className={`relative rounded-xl border p-3.5 sm:p-4 transition-all duration-300 flex flex-col justify-between min-h-[115px] sm:min-h-[125px] group ${
                       isUrgent
                         ? "border-rose-500/30 bg-gradient-to-br from-rose-950/15 via-slate-900/60 to-slate-950/80 shadow-[0_0_20px_-5px_rgba(244,63,94,0.15)] hover:border-rose-500/50"
                         : "border-slate-800/80 bg-gradient-to-br from-slate-900/80 via-slate-900/50 to-slate-950/90 hover:border-emerald-500/30 hover:shadow-[0_0_20px_-5px_rgba(0,230,118,0.1)]"

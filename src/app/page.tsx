@@ -6,6 +6,7 @@ import { useAuth } from "@/context/auth-context";
 import { useRouter } from "next/navigation";
 import Sidebar from "@/components/sidebar";
 import Header from "@/components/header";
+import MobileNav from "@/components/mobile-nav";
 import DashboardView from "@/components/dashboard-view";
 import TransactionsView from "@/components/transactions-view";
 import ImportCsvView from "@/components/import-csv-view";
@@ -72,7 +73,7 @@ function AppContent() {
   }
 
   return (
-    <div className="flex h-screen w-screen overflow-hidden bg-kolo-light font-sans text-slate-800">
+    <div className="flex h-screen w-screen overflow-hidden bg-kolo-light font-sans text-slate-800 relative">
       {/* Sidebar Navigation */}
       <Sidebar isOpen={isSidebarOpen} setIsOpen={setIsSidebarOpen} />
 
@@ -85,10 +86,13 @@ function AppContent() {
         />
 
         {/* Scrollable View Area */}
-        <main className="flex-1 overflow-y-auto">
+        <main className="flex-1 overflow-y-auto pb-24 md:pb-0">
           {renderActiveView()}
         </main>
       </div>
+
+      {/* Floating Mobile bottom navigation tab bar */}
+      <MobileNav />
     </div>
   );
 }

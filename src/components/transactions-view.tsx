@@ -251,12 +251,23 @@ export default function TransactionsView({
     }
   };
 
+  const [isMobileView, setIsMobileView] = useState(false);
+
+  React.useEffect(() => {
+    const handleResize = () => {
+      setIsMobileView(window.innerWidth < 640);
+    };
+    handleResize();
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
+
   return (
-    <div className="px-6 py-6 md:px-10 space-y-6">
+    <div className="px-4 py-4 md:px-10 md:py-6 space-y-6">
       {/* Filtering Actions Panel */}
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         {/* Search */}
-        <div className="relative flex-1 max-w-lg">
+        <div className="relative w-full sm:max-w-lg">
           <Search className="absolute left-4 top-1/2 h-4.5 w-4.5 -translate-y-1/2 text-slate-400" />
           <input
             type="text"
@@ -268,12 +279,12 @@ export default function TransactionsView({
         </div>
 
         {/* Filters */}
-        <div className="flex items-center gap-2.5">
+        <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto">
           {/* Spent / Received toggle */}
-          <div className="flex items-center rounded-full bg-slate-100 p-1 border border-slate-250/20">
+          <div className="flex items-center rounded-full bg-slate-100 p-1 border border-slate-250/20 flex-1 sm:flex-none justify-between">
             <button
               onClick={() => setSelectedType("all")}
-              className={`rounded-full px-4.5 py-1.5 text-xs font-bold transition-all ${
+              className={`flex-1 sm:flex-none rounded-full px-3.5 sm:px-4.5 py-1.5 text-xs font-bold transition-all ${
                 selectedType === "all"
                   ? "bg-slate-950 text-white shadow-sm"
                   : "text-slate-500 hover:text-slate-900"
@@ -283,7 +294,7 @@ export default function TransactionsView({
             </button>
             <button
               onClick={() => setSelectedType("spent")}
-              className={`rounded-full px-4.5 py-1.5 text-xs font-bold transition-all ${
+              className={`flex-1 sm:flex-none rounded-full px-3.5 sm:px-4.5 py-1.5 text-xs font-bold transition-all ${
                 selectedType === "spent"
                   ? "bg-slate-950 text-white shadow-sm"
                   : "text-slate-500 hover:text-slate-900"
@@ -293,7 +304,7 @@ export default function TransactionsView({
             </button>
             <button
               onClick={() => setSelectedType("received")}
-              className={`rounded-full px-4.5 py-1.5 text-xs font-bold transition-all ${
+              className={`flex-1 sm:flex-none rounded-full px-3.5 sm:px-4.5 py-1.5 text-xs font-bold transition-all ${
                 selectedType === "received"
                   ? "bg-slate-950 text-white shadow-sm"
                   : "text-slate-500 hover:text-slate-900"
@@ -323,7 +334,7 @@ export default function TransactionsView({
       </div>
 
       {/* Category Pills Row */}
-      <div className="flex items-center gap-2 overflow-x-auto pb-2 scrollbar-none -mx-6 px-6 md:-mx-10 md:px-10">
+      <div className="flex items-center gap-2 overflow-x-auto pb-2 scrollbar-none -mx-4 px-4 md:-mx-10 md:px-10">
         {categories.map((cat) => {
           const isSelected = selectedCategory === cat;
           return (
@@ -350,9 +361,9 @@ export default function TransactionsView({
           </div>
         ) : (
           groupedTxs.map((group) => (
-            <div key={group.dateStr} className="space-y-2.5">
+            <div key={group.dateStr} className="space-y-2">
               {/* Day Header */}
-              <div className="flex items-center justify-between text-xs font-black tracking-wider text-slate-400 px-1">
+              <div className="flex items-center justify-between text-[10px] sm:text-xs font-black tracking-wider text-slate-400 px-1 uppercase">
                 <span>{group.dateStr}</span>
                 {group.dayExpenses > 0 && (
                   <span className="font-semibold capitalize text-slate-400">₦{group.dayExpenses.toLocaleString("en-NG")} spent</span>
@@ -360,37 +371,37 @@ export default function TransactionsView({
               </div>
 
               {/* Day Transactions Card Box */}
-              <div className="rounded-3xl bg-white border border-slate-100/80 shadow-sm overflow-hidden divide-y divide-slate-100/50">
+              <div className="rounded-2xl sm:rounded-3xl bg-white border border-slate-100/80 shadow-3xs overflow-hidden divide-y divide-slate-100/50">
                 {group.txs.map((tx) => (
                   <div
                     key={tx.id}
                     onClick={() => handleEditClick(tx)}
-                    className="group relative flex items-center justify-between px-6 py-4.5 hover:bg-slate-50/40 transition-all cursor-pointer"
+                    className="group relative flex items-center justify-between px-4 sm:px-6 py-3.5 sm:py-4.5 hover:bg-slate-50/40 transition-all cursor-pointer"
                   >
-                    <div className="flex items-center gap-4">
+                    <div className="flex items-center gap-3 sm:gap-4 min-w-0">
                       {/* Icon Circular Background */}
-                      <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-slate-100/80 text-slate-500">
+                      <div className="flex h-9 w-9 sm:h-11 sm:w-11 shrink-0 items-center justify-center rounded-full bg-slate-100/80 text-slate-500">
                         {getCategoryIcon(tx.category, tx.type)}
                       </div>
 
                       {/* Merchant details */}
-                      <div className="flex flex-col">
+                      <div className="flex flex-col min-w-0">
                         <div className="flex items-center flex-wrap gap-1.5">
-                          <span className="text-sm font-extrabold text-slate-950">{tx.title}</span>
-                          <span className={`px-1.5 py-0.5 text-[8px] font-black rounded uppercase tracking-wider ${getBankBadgeStyle(tx.bank)}`}>
+                          <span className="text-xs sm:text-sm font-extrabold text-slate-950 truncate max-w-[120px] sm:max-w-none">{tx.title}</span>
+                          <span className={`px-1.5 py-0.5 text-[7px] sm:text-[8px] font-black rounded uppercase tracking-wider ${getBankBadgeStyle(tx.bank)}`}>
                             {tx.bank}
                           </span>
                         </div>
-                        <span className="text-xs text-slate-400 font-semibold mt-0.5">
+                        <span className="text-[10px] sm:text-xs text-slate-400 font-semibold mt-0.5 truncate max-w-[180px] sm:max-w-none">
                           {tx.category} · {tx.subtitle.includes("·") ? tx.subtitle.split("·").slice(1).join("·").trim() : tx.subtitle}
                         </span>
                       </div>
                     </div>
 
                     {/* Amount, Date and Hover Action Buttons */}
-                    <div className="flex items-center gap-4">
+                    <div className="flex items-center gap-2 sm:gap-4 shrink-0">
                       {/* Hover action overlay */}
-                      <div className="opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-1">
+                      <div className="hidden md:flex opacity-0 group-hover:opacity-100 transition-opacity items-center gap-1">
                         <button
                           onClick={(e) => {
                             e.stopPropagation();
@@ -415,12 +426,12 @@ export default function TransactionsView({
 
                       {/* Price / Subtitle info */}
                       <div className="flex flex-col items-end shrink-0">
-                        <span className={`text-sm font-black font-sans ${
+                        <span className={`text-xs sm:text-sm font-black font-sans ${
                           tx.type === "income" ? "text-[#22c55e]" : "text-slate-950"
                         }`}>
                           {tx.type === "income" ? "+ " : "- "}₦{tx.amount.toLocaleString("en-NG")}
                         </span>
-                        <span className="text-[10px] text-slate-400 font-semibold mt-0.5">
+                        <span className="text-[9px] sm:text-[10px] text-slate-400 font-semibold mt-0.5">
                           {formatDateSub(tx.date)}
                         </span>
                       </div>
@@ -436,7 +447,7 @@ export default function TransactionsView({
       {/* Modal Form for Add/Edit */}
       <AnimatePresence>
         {isFormOpen && (
-          <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+          <div className="fixed inset-0 z-[100] flex items-end sm:items-center justify-center p-0 sm:p-4">
             {/* Backdrop */}
             <motion.div
               initial={{ opacity: 0 }}
@@ -445,12 +456,13 @@ export default function TransactionsView({
               onClick={() => setIsFormOpen(false)}
               className="absolute inset-0 bg-slate-900"
             />
-            {/* Modal Body */}
+            {/* Modal Body: Slide-up Bottom Sheet on Mobile, Centered Modal on Desktop */}
             <motion.div
-              initial={{ opacity: 0, scale: 0.95, y: 10 }}
-              animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.95, y: 10 }}
-              className="relative w-full max-w-md overflow-hidden rounded-3xl bg-white p-6 shadow-2xl z-10"
+              initial={isMobileView ? { y: "100%" } : { opacity: 0, scale: 0.95, y: 10 }}
+              animate={isMobileView ? { y: 0 } : { opacity: 1, scale: 1, y: 0 }}
+              exit={isMobileView ? { y: "100%" } : { opacity: 0, scale: 0.95, y: 10 }}
+              transition={{ type: "spring", damping: 30, stiffness: 350 }}
+              className="relative w-full sm:max-w-md overflow-hidden rounded-t-3xl sm:rounded-3xl bg-white p-6 shadow-2xl z-10 max-h-[92vh] sm:max-h-none overflow-y-auto"
             >
               <div className="flex items-center justify-between mb-5">
                 <h3 className="text-md font-bold text-slate-950">

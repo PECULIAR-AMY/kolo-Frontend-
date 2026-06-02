@@ -302,7 +302,7 @@ Try selecting one of the quick prompts below to get started!`,
   };
 
   return (
-    <div className="flex h-[calc(100vh-80px)] flex-col bg-kolo-light font-sans text-slate-800">
+    <div className="flex h-[calc(100vh-80px)] flex-col bg-kolo-light font-sans text-slate-800 pb-20 md:pb-0">
       {/* Upper header */}
       <div className="border-b border-slate-100 bg-white px-6 py-4 md:px-10 flex items-center justify-between shadow-sm">
         <div>
