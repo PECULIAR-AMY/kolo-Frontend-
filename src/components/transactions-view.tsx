@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useCallback } from "react";
 import { useFinance, Transaction } from "@/context/finance-context";
 import { 
   Search, 
@@ -173,17 +173,17 @@ export default function TransactionsView({
   }, [filteredTxs]);
 
   // Subtitle/Date formatter: e.g., "May 28 · 09:04"
-  const formatDateSub = (dateStr: string) => {
+  const formatDateSub = useCallback((dateStr: string) => {
     const d = new Date(dateStr);
     const month = d.toLocaleDateString("en-US", { month: "short" });
     const day = d.getDate();
     const hours = String(d.getHours()).padStart(2, "0");
     const minutes = String(d.getMinutes()).padStart(2, "0");
     return `${month} ${day} · ${hours}:${minutes}`;
-  };
+  }, []);
 
   // Open form for adding
-  const handleNewClick = () => {
+  const handleNewClick = useCallback(() => {
     setEditingTx(null);
     setFormTitle("");
     setFormSubtitle("");
@@ -196,10 +196,10 @@ export default function TransactionsView({
     now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
     setFormDate(now.toISOString().slice(0, 16));
     setIsFormOpen(true);
-  };
+  }, [setEditingTx, setIsFormOpen]);
 
   // Open form for editing
-  const handleEditClick = (tx: Transaction) => {
+  const handleEditClick = useCallback((tx: Transaction) => {
     setEditingTx(tx);
     setFormTitle(tx.title);
     setFormSubtitle(tx.subtitle);
@@ -212,10 +212,10 @@ export default function TransactionsView({
     d.setMinutes(d.getMinutes() - d.getTimezoneOffset());
     setFormDate(d.toISOString().slice(0, 16));
     setIsFormOpen(true);
-  };
+  }, [setEditingTx, setIsFormOpen]);
 
   // Form submission
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = useCallback((e: React.FormEvent) => {
     e.preventDefault();
     if (!formTitle || !formAmount || isNaN(Number(formAmount))) return;
 
@@ -238,10 +238,10 @@ export default function TransactionsView({
       addTransaction(payload);
     }
     setIsFormOpen(false);
-  };
+  }, [formTitle, formAmount, formSubtitle, formCategory, formType, formBank, formDate, editingTx, updateTransaction, addTransaction, setIsFormOpen]);
 
   // Form Category helper logic
-  const handleCategoryChange = (cat: string) => {
+  const handleCategoryChange = useCallback((cat: string) => {
     setFormCategory(cat);
     // Auto-update standard income category
     if (cat === "Income") {
@@ -249,7 +249,7 @@ export default function TransactionsView({
     } else if (formType === "income" && cat !== "Income") {
       setFormType("expense");
     }
-  };
+  }, [formType]);
 
   const [isMobileView, setIsMobileView] = useState(false);
 

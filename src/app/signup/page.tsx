@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Mail, Lock, Eye, EyeOff, User, ArrowRight, AlertCircle, Loader2, Sparkles, CheckCircle2 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
+import Image from "next/image";
 
 export default function SignupPage() {
   const { signup, isAuthenticated, isLoading: authLoading } = useAuth();
@@ -151,23 +152,40 @@ export default function SignupPage() {
               Take Control of<br />Your Finances.
             </h2>
             
-            <p className="text-slate-400 text-sm md:text-base leading-relaxed mb-8">
+            <p className="text-slate-400 text-sm md:text-base leading-relaxed mb-6">
               Sign up in seconds to start building healthier savings habits. Your data is encrypted and saved directly to your browser.
             </p>
           </motion.div>
 
+          {/* Optimized Mock Card Preview */}
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ delay: 0.3, duration: 0.8 }}
+            className="rounded-2xl border border-slate-800/40 overflow-hidden shadow-2xl relative bg-slate-950/40 p-1 mb-6"
+          >
+            <Image
+              src="/kolo_showcase.png"
+              alt="Kolo Showcase Dashboard"
+              width={500}
+              height={320}
+              className="w-full h-auto object-cover rounded-xl opacity-90 hover:opacity-100 transition-opacity duration-500"
+              priority
+            />
+          </motion.div>
+
           {/* Bullet Points */}
-          <div className="space-y-4 text-sm text-slate-300">
+          <div className="space-y-3.5 text-sm text-slate-350">
             <div className="flex items-center gap-3">
-              <CheckCircle2 size={18} className="text-kolo-green" />
+              <CheckCircle2 size={16} className="text-kolo-green shrink-0" />
               <span>Full CSV import mapping for major Nigerian Banks</span>
             </div>
             <div className="flex items-center gap-3">
-              <CheckCircle2 size={18} className="text-kolo-green" />
+              <CheckCircle2 size={16} className="text-kolo-green shrink-0" />
               <span>Beautiful category expense allocation charts</span>
             </div>
             <div className="flex items-center gap-3">
-              <CheckCircle2 size={18} className="text-kolo-green" />
+              <CheckCircle2 size={16} className="text-kolo-green shrink-0" />
               <span>Secure local-first database encryption</span>
             </div>
           </div>

@@ -7,6 +7,8 @@ import Link from "next/link";
 import { Mail, Lock, Eye, EyeOff, Sparkles, ArrowRight, AlertCircle, Loader2 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 
+import Image from "next/image";
+
 export default function LoginPage() {
   const { login, isAuthenticated, isLoading: authLoading } = useAuth();
   const router = useRouter();
@@ -140,26 +142,16 @@ export default function LoginPage() {
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
             transition={{ delay: 0.3, duration: 0.8 }}
-            className="rounded-3xl bg-slate-900/40 border border-slate-800/60 p-6 backdrop-blur-xl shadow-2xl relative overflow-hidden"
+            className="rounded-3xl border border-slate-800/40 overflow-hidden shadow-2xl relative bg-slate-950/40 p-1"
           >
-            <div className="flex justify-between items-start mb-6">
-              <div>
-                <p className="text-xs text-slate-500 font-semibold uppercase tracking-wider">Total Savings</p>
-                <h3 className="text-2xl font-black text-white mt-1">₦647,500</h3>
-              </div>
-              <div className="rounded-full bg-kolo-green/10 px-2.5 py-1 text-[10px] font-bold text-kolo-green">
-                +62.5% Rate
-              </div>
-            </div>
-            
-            {/* Visual Mini Chart bars */}
-            <div className="flex gap-2.5 items-end h-24 pt-4 border-t border-slate-800/30">
-              <div className="w-full bg-slate-800 rounded-t-md h-[40%]" />
-              <div className="w-full bg-slate-800 rounded-t-md h-[55%]" />
-              <div className="w-full bg-slate-800 rounded-t-md h-[30%]" />
-              <div className="w-full bg-slate-800 rounded-t-md h-[80%]" />
-              <div className="w-full bg-kolo-green rounded-t-md h-[95%] shadow-[0_0_15px_rgba(162,233,50,0.3)]" />
-            </div>
+            <Image
+              src="/kolo_showcase.png"
+              alt="Kolo Showcase Dashboard"
+              width={500}
+              height={320}
+              className="w-full h-auto object-cover rounded-[1.4rem] opacity-90 hover:opacity-100 transition-opacity duration-500"
+              priority
+            />
           </motion.div>
         </div>
 

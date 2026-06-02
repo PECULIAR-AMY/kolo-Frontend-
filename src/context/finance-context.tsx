@@ -387,40 +387,50 @@ export function FinanceProvider({ children }: { children: React.ReactNode }) {
     setMounted(true);
   }, []);
 
-  const saveTransactions = (newTransactions: Transaction[]) => {
-    setTransactions(newTransactions);
-    localStorage.setItem("kolo_transactions", JSON.stringify(newTransactions));
-  };
-
-  const addTransaction = (t: Omit<Transaction, "id">) => {
+  const addTransaction = React.useCallback((t: Omit<Transaction, "id">) => {
     const newT: Transaction = {
       ...t,
       id: "tx-" + Math.random().toString(36).substr(2, 9),
     };
-    saveTransactions([newT, ...transactions]);
-  };
+    setTransactions((prev) => {
+      const next = [newT, ...prev];
+      localStorage.setItem("kolo_transactions", JSON.stringify(next));
+      return next;
+    });
+  }, []);
 
-  const updateTransaction = (id: string, updated: Omit<Transaction, "id">) => {
-    const next = transactions.map((t) => (t.id === id ? { ...updated, id } : t));
-    saveTransactions(next);
-  };
+  const updateTransaction = React.useCallback((id: string, updated: Omit<Transaction, "id">) => {
+    setTransactions((prev) => {
+      const next = prev.map((t) => (t.id === id ? { ...updated, id } : t));
+      localStorage.setItem("kolo_transactions", JSON.stringify(next));
+      return next;
+    });
+  }, []);
 
-  const deleteTransaction = (id: string) => {
-    const next = transactions.filter((t) => t.id !== id);
-    saveTransactions(next);
-  };
+  const deleteTransaction = React.useCallback((id: string) => {
+    setTransactions((prev) => {
+      const next = prev.filter((t) => t.id !== id);
+      localStorage.setItem("kolo_transactions", JSON.stringify(next));
+      return next;
+    });
+  }, []);
 
-  const importTransactions = (newTs: Omit<Transaction, "id">[]) => {
+  const importTransactions = React.useCallback((newTs: Omit<Transaction, "id">[]) => {
     const prepared = newTs.map((t) => ({
       ...t,
       id: "tx-" + Math.random().toString(36).substr(2, 9),
     }));
-    saveTransactions([...prepared, ...transactions]);
-  };
+    setTransactions((prev) => {
+      const next = [...prepared, ...prev];
+      localStorage.setItem("kolo_transactions", JSON.stringify(next));
+      return next;
+    });
+  }, []);
 
-  const resetToDefault = () => {
-    saveTransactions(SEED_TRANSACTIONS);
-  };
+  const resetToDefault = React.useCallback(() => {
+    setTransactions(SEED_TRANSACTIONS);
+    localStorage.setItem("kolo_transactions", JSON.stringify(SEED_TRANSACTIONS));
+  }, []);
 
   // Compute stats
   const stats = useMemo(() => {

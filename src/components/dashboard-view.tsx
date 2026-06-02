@@ -4,7 +4,13 @@ import React from "react";
 import { useFinance, Transaction } from "@/context/finance-context";
 import { generateAIInsights } from "@/utils/ai-engine";
 import { detectRecurringTransactions, RecurringItem } from "@/utils/recurring-engine";
-import SpendingTrend from "./spending-trend";
+import dynamic from "next/dynamic";
+import { ChartSkeleton } from "./skeleton-loaders";
+
+const SpendingTrend = dynamic(() => import("./spending-trend"), {
+  loading: () => <ChartSkeleton />,
+  ssr: false,
+});
 import { motion } from "framer-motion";
 import { 
   TrendingUp, 

@@ -7,11 +7,30 @@ import { useRouter } from "next/navigation";
 import Sidebar from "@/components/sidebar";
 import Header from "@/components/header";
 import MobileNav from "@/components/mobile-nav";
-import DashboardView from "@/components/dashboard-view";
-import TransactionsView from "@/components/transactions-view";
-import ImportCsvView from "@/components/import-csv-view";
-import AiAssistantView from "@/components/ai-assistant-view";
+import dynamic from "next/dynamic";
 import { motion } from "framer-motion";
+import {
+  DashboardSkeleton,
+  TransactionsSkeleton,
+  ImportCsvSkeleton,
+  AiAssistantSkeleton
+} from "@/components/skeleton-loaders";
+
+const DashboardView = dynamic(() => import("@/components/dashboard-view"), {
+  loading: () => <DashboardSkeleton />,
+});
+
+const TransactionsView = dynamic(() => import("@/components/transactions-view"), {
+  loading: () => <TransactionsSkeleton />,
+});
+
+const ImportCsvView = dynamic(() => import("@/components/import-csv-view"), {
+  loading: () => <ImportCsvSkeleton />,
+});
+
+const AiAssistantView = dynamic(() => import("@/components/ai-assistant-view"), {
+  loading: () => <AiAssistantSkeleton />,
+});
 
 function AppContent() {
   const { activeTab } = useFinance();
