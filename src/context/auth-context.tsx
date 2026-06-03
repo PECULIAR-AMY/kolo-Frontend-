@@ -105,7 +105,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       return { success: true };
     } catch (error) {
       setIsLoading(false);
-      return { success: false, error: "Could not create account. Please try again." };
+      return { success: false, error: "Could not create account, Please try again." };
     }
   };
 
