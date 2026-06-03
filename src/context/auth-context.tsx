@@ -1,6 +1,7 @@
 "use client";
 
 import React, { createContext, useContext, useState, useEffect } from "react";
+import { useToast } from "@/context/toast-context";
 
 export interface User {
   id: string;
@@ -24,6 +25,7 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const toast = useToast();
 
   // Initialize and check for existing session
   useEffect(() => {
@@ -58,13 +60,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         setUser(safeUser);
         localStorage.setItem("kolo_current_user", JSON.stringify(safeUser));
         setIsLoading(false);
+        toast.success(`Welcome back, ${safeUser.name}! 👋`);
         return { success: true };
       } else {
         setIsLoading(false);
+        toast.error("Invalid email or password. Please try again.");
         return { success: false, error: "Invalid email or password. Please try again." };
       }
     } catch (error) {
       setIsLoading(false);
+      toast.error("An unexpected error occurred. Please try again.");
       return { success: false, error: "An unexpected error occurred. Please try again." };
     }
   };
@@ -82,6 +87,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
       if (userExists) {
         setIsLoading(false);
+        toast.error("An account with this email already exists.");
         return { success: false, error: "An account with this email already exists." };
       }
 
@@ -102,9 +108,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       localStorage.setItem("kolo_current_user", JSON.stringify(safeUser));
       
       setIsLoading(false);
+      toast.success("Account created successfully! Welcome to Kolo.");
       return { success: true };
     } catch (error) {
       setIsLoading(false);
+      toast.error("Could not create account, Please try again.");
       return { success: false, error: "Could not create account, Please try again." };
     }
   };
@@ -112,6 +120,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const logout = () => {
     setUser(null);
     localStorage.removeItem("kolo_current_user");
+    toast.info("You have logged out successfully.");
   };
 
   return (

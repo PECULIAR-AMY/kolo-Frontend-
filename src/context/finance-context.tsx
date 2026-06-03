@@ -1,6 +1,7 @@
 "use client";
 
 import React, { createContext, useContext, useState, useEffect, useMemo } from "react";
+import { useToast } from "@/context/toast-context";
 
 export interface Transaction {
   id: string;
@@ -387,6 +388,8 @@ export function FinanceProvider({ children }: { children: React.ReactNode }) {
     setMounted(true);
   }, []);
 
+  const toast = useToast();
+
   const addTransaction = React.useCallback((t: Omit<Transaction, "id">) => {
     const newT: Transaction = {
       ...t,
@@ -397,7 +400,8 @@ export function FinanceProvider({ children }: { children: React.ReactNode }) {
       localStorage.setItem("kolo_transactions", JSON.stringify(next));
       return next;
     });
-  }, []);
+    toast.success(`Added transaction: ${t.title}`);
+  }, [toast]);
 
   const updateTransaction = React.useCallback((id: string, updated: Omit<Transaction, "id">) => {
     setTransactions((prev) => {
@@ -405,15 +409,20 @@ export function FinanceProvider({ children }: { children: React.ReactNode }) {
       localStorage.setItem("kolo_transactions", JSON.stringify(next));
       return next;
     });
-  }, []);
+    toast.success(`Updated transaction: ${updated.title}`);
+  }, [toast]);
 
   const deleteTransaction = React.useCallback((id: string) => {
+    let deletedTitle = "";
     setTransactions((prev) => {
+      const target = prev.find((t) => t.id === id);
+      if (target) deletedTitle = target.title;
       const next = prev.filter((t) => t.id !== id);
       localStorage.setItem("kolo_transactions", JSON.stringify(next));
       return next;
     });
-  }, []);
+    toast.warning(deletedTitle ? `Deleted transaction: ${deletedTitle}` : "Transaction deleted");
+  }, [toast]);
 
   const importTransactions = React.useCallback((newTs: Omit<Transaction, "id">[]) => {
     const prepared = newTs.map((t) => ({
@@ -425,12 +434,14 @@ export function FinanceProvider({ children }: { children: React.ReactNode }) {
       localStorage.setItem("kolo_transactions", JSON.stringify(next));
       return next;
     });
-  }, []);
+    toast.success(`Successfully imported ${newTs.length} transactions`);
+  }, [toast]);
 
   const resetToDefault = React.useCallback(() => {
     setTransactions(SEED_TRANSACTIONS);
     localStorage.setItem("kolo_transactions", JSON.stringify(SEED_TRANSACTIONS));
-  }, []);
+    toast.info("Database reset to original seed data");
+  }, [toast]);
 
   // Compute stats
   const stats = useMemo(() => {
