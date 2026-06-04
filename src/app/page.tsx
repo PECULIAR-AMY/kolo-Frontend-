@@ -3,10 +3,13 @@
 import React, { useState, useEffect } from "react";
 import { FinanceProvider, useFinance, Transaction } from "@/context/finance-context";
 import { useAuth } from "@/context/auth-context";
+import { useTheme } from "@/context/theme-context";
 import { useRouter } from "next/navigation";
 import Sidebar from "@/components/sidebar";
 import Header from "@/components/header";
 import MobileNav from "@/components/mobile-nav";
+import CommandPalette from "@/components/command-palette";
+import ShortcutsHelpModal from "@/components/shortcuts-help-modal";
 import dynamic from "next/dynamic";
 import { motion } from "framer-motion";
 import {
@@ -33,10 +36,13 @@ const AiAssistantView = dynamic(() => import("@/components/ai-assistant-view"), 
 });
 
 function AppContent() {
-  const { activeTab } = useFinance();
+  const { activeTab, setActiveTab } = useFinance();
+  const { toggleTheme } = useTheme();
   const { isAuthenticated, isLoading: authLoading } = useAuth();
   const router = useRouter();
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const [isCommandPaletteOpen, setIsCommandPaletteOpen] = useState(false);
+  const [isShortcutsHelpOpen, setIsShortcutsHelpOpen] = useState(false);
   
   // Transaction Modal Form states
   const [isFormOpen, setIsFormOpen] = useState(false);
@@ -48,6 +54,90 @@ function AppContent() {
       router.push("/login");
     }
   }, [isAuthenticated, authLoading, router]);
+
+  // Global Keyboard Shortcuts event listener
+  useEffect(() => {
+    const handleGlobalKeyDown = (e: KeyboardEvent) => {
+      // Toggle Command Palette on Ctrl+K or Cmd+K
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "k") {
+        e.preventDefault();
+        setIsCommandPaletteOpen((prev) => !prev);
+        return;
+      }
+
+      // Check if user is typing in a form input
+      const activeEl = document.activeElement;
+      const isInput =
+        activeEl &&
+        (activeEl.tagName === "INPUT" ||
+          activeEl.tagName === "TEXTAREA" ||
+          activeEl.tagName === "SELECT" ||
+          activeEl.getAttribute("contenteditable") === "true");
+
+      if (isInput) return;
+
+      // Handle Escape to close command palette or shortcuts help
+      if (e.key === "Escape") {
+        setIsCommandPaletteOpen(false);
+        setIsShortcutsHelpOpen(false);
+        return;
+      }
+
+      // Single character commands
+      const key = e.key.toLowerCase();
+
+      if (key === "?") {
+        e.preventDefault();
+        setIsShortcutsHelpOpen((prev) => !prev);
+        return;
+      }
+
+      if (key === "t") {
+        e.preventDefault();
+        toggleTheme();
+        return;
+      }
+
+      if (key === "c") {
+        e.preventDefault();
+        setActiveTab("transactions");
+        setEditingTx(null);
+        setIsFormOpen(true);
+        return;
+      }
+
+      // Handle sequence commands (e.g. "g" then "d")
+      if (key === "g") {
+        const handleNextKey = (nextEvent: KeyboardEvent) => {
+          document.removeEventListener("keydown", handleNextKey);
+          const nextKey = nextEvent.key.toLowerCase();
+          if (nextKey === "d") {
+            nextEvent.preventDefault();
+            setActiveTab("dashboard");
+          } else if (nextKey === "t") {
+            nextEvent.preventDefault();
+            setActiveTab("transactions");
+          } else if (nextKey === "i") {
+            nextEvent.preventDefault();
+            setActiveTab("import");
+          } else if (nextKey === "a") {
+            nextEvent.preventDefault();
+            setActiveTab("ai-assistant");
+          }
+        };
+        document.addEventListener("keydown", handleNextKey);
+        // Clean up the temporary listener if no key is pressed in 1 second
+        setTimeout(() => {
+          document.removeEventListener("keydown", handleNextKey);
+        }, 1000);
+      }
+    };
+
+    document.addEventListener("keydown", handleGlobalKeyDown);
+    return () => {
+      document.removeEventListener("keydown", handleGlobalKeyDown);
+    };
+  }, [toggleTheme, setActiveTab]);
 
   // Trigger add modal from Header
   const handleAddClick = () => {
@@ -112,6 +202,20 @@ function AppContent() {
 
       {/* Floating Mobile bottom navigation tab bar */}
       <MobileNav />
+
+      {/* Command Palette Overlay */}
+      <CommandPalette
+        isOpen={isCommandPaletteOpen}
+        onClose={() => setIsCommandPaletteOpen(false)}
+        setIsFormOpen={setIsFormOpen}
+        setEditingTx={setEditingTx}
+      />
+
+      {/* Shortcuts Help dialog */}
+      <ShortcutsHelpModal
+        isOpen={isShortcutsHelpOpen}
+        onClose={() => setIsShortcutsHelpOpen(false)}
+      />
     </div>
   );
 }
