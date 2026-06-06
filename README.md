@@ -4,12 +4,12 @@ An obsidian/emerald-themed, client-first intelligent financial assistant enginee
 
 ---
 
-## ⚡ 1. One-line Product Pitch
+## 1. One-line Product Pitch
 Gain complete control of your wealth through private, local-first analytics, interactive AI planning, and seamless bank CSV ingestions—all wrapped in a premium, high-performance glassmorphic interface.
 
 ---
 
-## 🔍 2. Problem Statement
+## 2. Problem Statement
 Most personal finance applications present several critical friction points:
 1. **Privacy Concerns**: Requiring direct bank credential syncs exposes sensitive user information to external database storage.
 2. **Clunky Data Entry**: Manually adding transactions is tedious, leading to app abandonment, while CSV statements from local banks are poorly parsed.
@@ -18,7 +18,7 @@ Most personal finance applications present several critical friction points:
 
 ---
 
-## 💡 3. Solution
+## 3. Solution
 `kolo.` solves these problems with a local-first, high-fidelity web application:
 - **Local-First Privacy**: All accounts and transactions reside completely within your browser's `localStorage`—no cookies, external servers, or data mining.
 - **Smart Statement Ingestion**: Pre-configured CSV ingestion templates for major financial institutions (Kuda, GTBank, OPay, PalmPay, Moniepoint) parse statement files automatically in seconds.
@@ -27,9 +27,9 @@ Most personal finance applications present several critical friction points:
 
 ---
 
-## ✨ 4. Features
+## 4. Features
 
-### 📊 Financial Dashboard
+### Financial Dashboard
 - Dynamic summaries of Income, Expenses, Savings Amount, and Savings Rate.
 - Pulse-glowing "Upcoming Bills" widget showing timelines, due dates, and active statuses.
 - Spendings category distribution lists and responsive Recharts daily curves.
@@ -39,7 +39,7 @@ Most personal finance applications present several critical friction points:
 - Live keyword searching and dual filter systems (Pill categories & Transact types).
 - Tactile transaction compositor supporting Add/Edit/Delete actions.
 
-### 📂 CSV Statement Ingestion
+### CSV Statement Ingestion
 - Raw drag-and-drop CSV parsing supporting PapaParse.
 - Columns mappings matching Kuda, GTBank, OPay, PalmPay, and Moniepoint outputs.
 - Table previews with transaction check counts before ingestion commit.
