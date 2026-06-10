@@ -10,8 +10,10 @@ interface ChartData {
 
 export default function SpendingTrend({ data }: { data: ChartData[] }) {
   const [isMobile, setIsMobile] = React.useState(false);
+  const [isMounted, setIsMounted] = React.useState(false);
 
   React.useEffect(() => {
+    setIsMounted(true);
     const handleResize = () => {
       setIsMobile(window.innerWidth < 640);
     };
@@ -40,6 +42,10 @@ export default function SpendingTrend({ data }: { data: ChartData[] }) {
     }
     return null;
   };
+
+  if (!isMounted) {
+    return <div className="h-64 w-full md:h-72 select-none" />;
+  }
 
   return (
     <div className="h-64 w-full md:h-72 select-none" style={{ touchAction: "pan-y" }}>
