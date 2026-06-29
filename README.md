@@ -68,7 +68,7 @@ Most personal finance applications present several critical friction points:
 
 ---
 
-## 🏗️ 6. Architecture
+6. Architecture
 `kolo.` is structured as a client-side single-page app (SPA) wrapping context providers for reactive state distribution:
 
 ```mermaid
