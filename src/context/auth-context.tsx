@@ -2,6 +2,7 @@
 
 import React, { createContext, useContext, useState, useEffect } from "react";
 import { useToast } from "@/context/toast-context";
+import api from "@/api/axios";
 
 export interface User {
   id: string;
@@ -44,76 +45,84 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const login = async (email: string, password: string): Promise<{ success: boolean; error?: string }> => {
     setIsLoading(true);
-    // Simulate a minor API delay for premium feel
-    await new Promise((resolve) => setTimeout(resolve, 800));
 
     try {
-      const storedUsers = localStorage.getItem("kolo_users");
-      const users: User[] = storedUsers ? JSON.parse(storedUsers) : [];
+      const response = await api.post("/auth/login", {
+        email: email.trim().toLowerCase(),
+        password,
+      });
 
-      const foundUser = users.find(
-        (u) => u.email.toLowerCase() === email.toLowerCase() && u.password === password
-      );
+      if (response.data.success) {
+        const { user: backendUser, accessToken } = response.data;
 
-      if (foundUser) {
-        const { password: _, ...safeUser } = foundUser;
-        setUser(safeUser);
-        localStorage.setItem("kolo_current_user", JSON.stringify(safeUser));
+        // Map backend user to local User interface
+        const loggedInUser: User = {
+          id: backendUser.id,
+          name: backendUser.fullName,
+          email: backendUser.email,
+          createdAt: backendUser.createdAt,
+        };
+
+        setUser(loggedInUser);
+        localStorage.setItem("kolo_current_user", JSON.stringify(loggedInUser));
+        localStorage.setItem("kolo_access_token", accessToken);
+
         setIsLoading(false);
-        toast.success(`Welcome back, ${safeUser.name}! 👋`);
+        toast.success(`Welcome back, ${loggedInUser.name}! 👋`);
         return { success: true };
       } else {
+        const errorMessage = response.data.message || "Invalid email or password. Please try again.";
         setIsLoading(false);
-        toast.error("Invalid email or password. Please try again.");
-        return { success: false, error: "Invalid email or password. Please try again." };
+        toast.error(errorMessage);
+        return { success: false, error: errorMessage };
       }
-    } catch (error) {
+    } catch (error: any) {
       setIsLoading(false);
-      toast.error("An unexpected error occurred. Please try again.");
-      return { success: false, error: "An unexpected error occurred. Please try again." };
+      const errorMessage = error.response?.data?.message || error.message || "Invalid email or password. Please try again.";
+      toast.error(errorMessage);
+      return { success: false, error: errorMessage };
     }
   };
 
   const signup = async (name: string, email: string, password: string): Promise<{ success: boolean; error?: string }> => {
     setIsLoading(true);
-    // Simulate minor network delay
-    await new Promise((resolve) => setTimeout(resolve, 1000));
 
     try {
-      const storedUsers = localStorage.getItem("kolo_users");
-      const users: User[] = storedUsers ? JSON.parse(storedUsers) : [];
-
-      const userExists = users.some((u) => u.email.toLowerCase() === email.toLowerCase());
-
-      if (userExists) {
-        setIsLoading(false);
-        toast.error("An account with this email already exists.");
-        return { success: false, error: "An account with this email already exists." };
-      }
-
-      const newUser: User = {
-        id: "usr-" + Math.random().toString(36).substr(2, 9),
-        name: name.trim(),
+      const response = await api.post("/auth/register", {
+        fullName: name.trim(),
         email: email.trim().toLowerCase(),
         password,
-        createdAt: new Date().toISOString(),
-      };
+      });
 
-      users.push(newUser);
-      localStorage.setItem("kolo_users", JSON.stringify(users));
+      if (response.data.success) {
+        const { user: backendUser, accessToken } = response.data;
 
-      // Auto login the user after signing up
-      const { password: _, ...safeUser } = newUser;
-      setUser(safeUser);
-      localStorage.setItem("kolo_current_user", JSON.stringify(safeUser));
-      
+        // Map backend user to local User interface
+        const loggedInUser: User = {
+          id: backendUser.id,
+          name: backendUser.fullName,
+          email: backendUser.email,
+          createdAt: backendUser.createdAt,
+        };
+
+        setUser(loggedInUser);
+        localStorage.setItem("kolo_current_user", JSON.stringify(loggedInUser));
+        localStorage.setItem("kolo_access_token", accessToken);
+
+        setIsLoading(false);
+        toast.success("Account created successfully! Welcome to Kolo.");
+        return { success: true };
+      } else {
+        const errorMessage = response.data.message || "Could not create account, Please try again.";
+        setIsLoading(false);
+        toast.error(errorMessage);
+        return { success: false, error: errorMessage };
+      }
+    } catch (error: any) {
       setIsLoading(false);
-      toast.success("Account created successfully! Welcome to Kolo.");
-      return { success: true };
-    } catch (error) {
-      setIsLoading(false);
-      toast.error("Could not create account, Please try again.");
-      return { success: false, error: "Could not create account, Please try again." };
+      const errorMessage = error.response?.data?.message || error.message || "Could not create account, Please try again.";
+      toast.error(errorMessage);
+      return { success: false, error: errorMessage };
     }
   };
 
