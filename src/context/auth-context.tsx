@@ -18,7 +18,9 @@ interface AuthContextType {
   isLoading: boolean;
   login: (email: string, password: string) => Promise<{ success: boolean; error?: string }>;
   signup: (name: string, email: string, password: string) => Promise<{ success: boolean; error?: string }>;
-  logout: () => void;
+  logout: () => Promise<void>;
+  forgotPassword: (email: string) => Promise<{ success: boolean; message: string; error?: string }>;
+  resetPassword: (email: string, token: string, newPassword: string) => Promise<{ success: boolean; message: string; error?: string }>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -30,17 +32,34 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   // Initialize and check for existing session
   useEffect(() => {
-    try {
-      const storedUser = localStorage.getItem("kolo_current_user");
-      if (storedUser) {
-        setUser(JSON.parse(storedUser));
+    const initializeAuth = async () => {
+      try {
+        const storedUser = localStorage.getItem("kolo_current_user");
+        const token = localStorage.getItem("kolo_access_token");
+        
+        if (storedUser && token) {
+          setUser(JSON.parse(storedUser));
+          
+          // Verify/refresh token silently on mount to make sure session is active
+          try {
+            await api.post("/auth/refresh");
+          } catch (refreshErr) {
+            console.error("Mount session check failed, logging out:", refreshErr);
+            setUser(null);
+            localStorage.removeItem("kolo_current_user");
+            localStorage.removeItem("kolo_access_token");
+          }
+        }
+      } catch (error) {
+        console.error("Failed to initialize user session:", error);
+        localStorage.removeItem("kolo_current_user");
+        localStorage.removeItem("kolo_access_token");
+      } finally {
+        setIsLoading(false);
       }
-    } catch (error) {
-      console.error("Failed to parse stored user session:", error);
-      localStorage.removeItem("kolo_current_user");
-    } finally {
-      setIsLoading(false);
-    }
+    };
+
+    initializeAuth();
   }, []);
 
   const login = async (email: string, password: string): Promise<{ success: boolean; error?: string }> => {
@@ -126,10 +145,51 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
-  const logout = () => {
-    setUser(null);
-    localStorage.removeItem("kolo_current_user");
-    toast.info("You have logged out successfully.");
+  const logout = async () => {
+    try {
+      await api.post("/auth/logout");
+    } catch (error) {
+      console.error("Failed to log out on backend:", error);
+    } finally {
+      setUser(null);
+      localStorage.removeItem("kolo_current_user");
+      localStorage.removeItem("kolo_access_token");
+      toast.info("You have logged out successfully.");
+    }
+  };
+
+  const forgotPassword = async (email: string): Promise<{ success: boolean; message: string; error?: string }> => {
+    try {
+      const response = await api.post("/auth/forgot-password", {
+        email: email.trim().toLowerCase(),
+      });
+
+      if (response.data.message) {
+        return { success: true, message: response.data.message };
+      }
+      return { success: true, message: "If an account with that email exists, a password reset link has been sent." };
+    } catch (error: any) {
+      const errorMessage = error.response?.data?.message || error.message || "Failed to process request. Please try again.";
+      return { success: false, message: errorMessage, error: errorMessage };
+    }
+  };
+
+  const resetPassword = async (email: string, token: string, newPassword: string): Promise<{ success: boolean; message: string; error?: string }> => {
+    try {
+      const response = await api.post("/auth/reset-password", {
+        email: email.trim().toLowerCase(),
+        token,
+        newPassword,
+      });
+
+      if (response.data.success) {
+        return { success: true, message: response.data.message || "Password reset successful." };
+      }
+      return { success: false, message: response.data.message || "Failed to reset password.", error: response.data.message };
+    } catch (error: any) {
+      const errorMessage = error.response?.data?.message || error.message || "Failed to reset password. Please try again.";
+      return { success: false, message: errorMessage, error: errorMessage };
+    }
   };
 
   return (
@@ -141,6 +201,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         login,
         signup,
         logout,
+        forgotPassword,
+        resetPassword,
       }}
     >
       {children}
