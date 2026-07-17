@@ -4,6 +4,16 @@
 declare module "axios";
 import axios from "axios";
 
+let tokenInMemory: string | null = null;
+
+export const setAccessToken = (token: string | null) => {
+  tokenInMemory = token;
+};
+
+export const getAccessToken = () => {
+  return tokenInMemory;
+};
+
 const api = axios.create({
   baseURL: process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api",
   withCredentials: true,
@@ -15,12 +25,10 @@ const api = axios.create({
 // Request Interceptor to add Authorization header
 api.interceptors.request.use(
   (config: any) => {
-    if (typeof window !== "undefined") {
-      const token = localStorage.getItem("kolo_access_token");
-      if (token) {
-        config.headers = config.headers || {};
-        config.headers.Authorization = `Bearer ${token}`;
-      }
+    const token = getAccessToken();
+    if (token) {
+      config.headers = config.headers || {};
+      config.headers.Authorization = `Bearer ${token}`;
     }
     return config;
   },
@@ -34,7 +42,6 @@ api.interceptors.response.use(
   (response: any) => response,
   async (error: any) => {
     const originalRequest = error.config;
-
     // Avoid infinite loop if refresh token request itself fails with 401
     if (
       error.response?.status === 401 &&
@@ -54,7 +61,7 @@ api.interceptors.response.use(
 
         if (response.data.success && response.data.accessToken) {
           const newAccessToken = response.data.accessToken;
-          localStorage.setItem("kolo_access_token", newAccessToken);
+          setAccessToken(newAccessToken);
 
           // Update header and retry original request
           originalRequest.headers = originalRequest.headers || {};
@@ -65,7 +72,7 @@ api.interceptors.response.use(
         // If refresh fails, clear session and redirect to login
         if (typeof window !== "undefined") {
           localStorage.removeItem("kolo_current_user");
-          localStorage.removeItem("kolo_access_token");
+          setAccessToken(null);
           window.location.href = "/login";
         }
         return Promise.reject(refreshError);

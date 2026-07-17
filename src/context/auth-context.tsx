@@ -1,8 +1,9 @@
 "use client";
 
 import React, { createContext, useContext, useState, useEffect } from "react";
+import axios from "axios";
 import { useToast } from "@/context/toast-context";
-import api from "@/api/axios";
+import api, { setAccessToken } from "@/api/axios";
 
 export interface User {
   id: string;
@@ -25,6 +26,16 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
+const getErrorMessage = (error: unknown, fallback: string) => {
+  if (axios.isAxiosError(error)) {
+    return error.response?.data?.message || error.message || fallback;
+  }
+  if (error instanceof Error) {
+    return error.message || fallback;
+  }
+  return fallback;
+};
+
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -35,25 +46,28 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const initializeAuth = async () => {
       try {
         const storedUser = localStorage.getItem("kolo_current_user");
-        const token = localStorage.getItem("kolo_access_token");
         
-        if (storedUser && token) {
-          setUser(JSON.parse(storedUser));
-          
-          // Verify/refresh token silently on mount to make sure session is active
+        if (storedUser) {
+          // Verify/refresh token silently on mount to make sure session is active and get access token in memory
           try {
-            await api.post("/auth/refresh");
+            const response = await api.post("/auth/refresh");
+            if (response.data.success && response.data.accessToken) {
+              setAccessToken(response.data.accessToken);
+              setUser(JSON.parse(storedUser));
+            } else {
+              throw new Error("Invalid token refresh response");
+            }
           } catch (refreshErr) {
             console.error("Mount session check failed, logging out:", refreshErr);
             setUser(null);
             localStorage.removeItem("kolo_current_user");
-            localStorage.removeItem("kolo_access_token");
+            setAccessToken(null);
           }
         }
       } catch (error) {
         console.error("Failed to initialize user session:", error);
         localStorage.removeItem("kolo_current_user");
-        localStorage.removeItem("kolo_access_token");
+        setAccessToken(null);
       } finally {
         setIsLoading(false);
       }
@@ -84,7 +98,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
         setUser(loggedInUser);
         localStorage.setItem("kolo_current_user", JSON.stringify(loggedInUser));
-        localStorage.setItem("kolo_access_token", accessToken);
+        setAccessToken(accessToken);
 
         setIsLoading(false);
         toast.success(`Welcome back, ${loggedInUser.name}! 👋`);
@@ -95,9 +109,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         toast.error(errorMessage);
         return { success: false, error: errorMessage };
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
       setIsLoading(false);
-      const errorMessage = error.response?.data?.message || error.message || "Invalid email or password. Please try again.";
+      const errorMessage = getErrorMessage(error, "Invalid email or password. Please try again.");
       toast.error(errorMessage);
       return { success: false, error: errorMessage };
     }
@@ -126,7 +140,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
         setUser(loggedInUser);
         localStorage.setItem("kolo_current_user", JSON.stringify(loggedInUser));
-        localStorage.setItem("kolo_access_token", accessToken);
+        setAccessToken(accessToken);
 
         setIsLoading(false);
         toast.success("Account created successfully! Welcome to Kolo.");
@@ -137,9 +151,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         toast.error(errorMessage);
         return { success: false, error: errorMessage };
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
       setIsLoading(false);
-      const errorMessage = error.response?.data?.message || error.message || "Could not create account, Please try again.";
+      const errorMessage = getErrorMessage(error, "Could not create account, Please try again.");
       toast.error(errorMessage);
       return { success: false, error: errorMessage };
     }
@@ -153,7 +167,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     } finally {
       setUser(null);
       localStorage.removeItem("kolo_current_user");
-      localStorage.removeItem("kolo_access_token");
+      setAccessToken(null);
       toast.info("You have logged out successfully.");
     }
   };
@@ -168,8 +182,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         return { success: true, message: response.data.message };
       }
       return { success: true, message: "If an account with that email exists, a password reset link has been sent." };
-    } catch (error: any) {
-      const errorMessage = error.response?.data?.message || error.message || "Failed to process request. Please try again.";
+    } catch (error: unknown) {
+      const errorMessage = getErrorMessage(error, "Failed to process request. Please try again.");
       return { success: false, message: errorMessage, error: errorMessage };
     }
   };
@@ -186,8 +200,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         return { success: true, message: response.data.message || "Password reset successful." };
       }
       return { success: false, message: response.data.message || "Failed to reset password.", error: response.data.message };
-    } catch (error: any) {
-      const errorMessage = error.response?.data?.message || error.message || "Failed to reset password. Please try again.";
+    } catch (error: unknown) {
+      const errorMessage = getErrorMessage(error, "Failed to reset password. Please try again.");
       return { success: false, message: errorMessage, error: errorMessage };
     }
   };
