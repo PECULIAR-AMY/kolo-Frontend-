@@ -35,24 +35,33 @@ import {
 
 // Helper to get transaction category icon
 const getCategoryIcon = (category: string, type: "income" | "expense") => {
-  if (type === "income") return <Wallet className="h-4 w-4 text-emerald-600" />;
+  if (type === "income" || category.toLowerCase() === "salary") return <Wallet className="h-4 w-4 text-emerald-600" />;
   
-  switch (category) {
-    case "Transport":
+  switch (category.toLowerCase()) {
+    case "transport":
       return <Car className="h-4 w-4 text-slate-600" />;
-    case "Food & Dining":
+    case "food & dining":
+    case "food":
       return <Utensils className="h-4 w-4 text-slate-600" />;
-    case "Subscriptions":
+    case "subscriptions":
+    case "subscription":
       return <RefreshCw className="h-4 w-4 text-slate-600" />;
-    case "Groceries":
+    case "groceries":
       return <ShoppingBag className="h-4 w-4 text-slate-600" />;
-    case "Airtime & Data":
+    case "airtime & data":
+    case "airtime":
+    case "data":
       return <Smartphone className="h-4 w-4 text-slate-600" />;
-    case "Transfers":
+    case "transfers":
+    case "transfer":
+    case "rent":
+    case "investment":
       return <RefreshCw className="h-4 w-4 text-slate-600" />;
-    case "POS & Cash":
+    case "pos & cash":
+    case "pos":
       return <CreditCard className="h-4 w-4 text-slate-600" />;
-    case "Health":
+    case "health":
+    case "healthcare":
       return <Heart className="h-4 w-4 text-slate-600" />;
     default:
       return <HelpCircle className="h-4 w-4 text-slate-600" />;

@@ -2,6 +2,26 @@
 
 import React, { createContext, useContext, useState, useEffect, useMemo } from "react";
 import { useToast } from "@/context/toast-context";
+import { useAuth } from "@/context/auth-context";
+import { getCategories } from "@/api/category";
+
+const DEFAULT_CATEGORIES = [
+  "Food",
+  "Transport",
+  "Shopping",
+  "Salary",
+  "Rent",
+  "Entertainment",
+  "Healthcare",
+  "Investment",
+  "Transfer",
+  "Airtime",
+  "Subscription",
+  "Bills & Utilities",
+  "Data",
+  "POS",
+  "Others",
+];
 
 export interface Transaction {
   id: string;
@@ -25,6 +45,7 @@ interface FinanceContextType {
   deleteTransaction: (id: string) => void;
   importTransactions: (ts: Omit<Transaction, "id">[]) => void;
   resetToDefault: () => void;
+  categories: string[];
   
   // Computed metrics
   totalIncome: number;
@@ -372,6 +393,8 @@ export function FinanceProvider({ children }: { children: React.ReactNode }) {
   const [activeTab, setActiveTab] = useState<TabType>("dashboard");
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [mounted, setMounted] = useState(false);
+  const [categories, setCategories] = useState<string[]>(DEFAULT_CATEGORIES);
+  const { isAuthenticated } = useAuth();
 
   useEffect(() => {
     const local = localStorage.getItem("kolo_transactions");
@@ -387,6 +410,25 @@ export function FinanceProvider({ children }: { children: React.ReactNode }) {
     }
     setMounted(true);
   }, []);
+
+  useEffect(() => {
+    const fetchCategories = async () => {
+      try {
+        const response = await getCategories();
+        if (response.success && response.categories) {
+          setCategories(response.categories.map((c) => c.name));
+        }
+      } catch (err) {
+        console.error("Failed to fetch categories:", err);
+      }
+    };
+
+    if (isAuthenticated) {
+      fetchCategories();
+    } else {
+      setCategories(DEFAULT_CATEGORIES);
+    }
+  }, [isAuthenticated]);
 
   const toast = useToast();
 
@@ -540,6 +582,7 @@ export function FinanceProvider({ children }: { children: React.ReactNode }) {
           deleteTransaction: () => {},
           importTransactions: () => {},
           resetToDefault: () => {},
+          categories: DEFAULT_CATEGORIES,
           totalIncome: 1036800,
           totalExpenses: 389300,
           savingsAmount: 647500,
@@ -567,6 +610,7 @@ export function FinanceProvider({ children }: { children: React.ReactNode }) {
         deleteTransaction,
         importTransactions,
         resetToDefault,
+        categories,
         ...stats,
       }}
     >

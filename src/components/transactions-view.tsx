@@ -26,30 +26,38 @@ import { motion, AnimatePresence } from "framer-motion";
 
 // Helper to get transaction category icon
 const getCategoryIcon = (category: string, type: "income" | "expense") => {
-  if (type === "income") return <Wallet className="h-5 w-5 text-slate-500" />;
+  if (type === "income" || category.toLowerCase() === "salary") return <Wallet className="h-5 w-5 text-slate-500" />;
   
-  switch (category) {
-    case "Transport":
+  switch (category.toLowerCase()) {
+    case "transport":
       return <Car className="h-5 w-5 text-slate-500" />;
-    case "Food & Dining":
+    case "food & dining":
+    case "food":
       return <Utensils className="h-5 w-5 text-slate-500" />;
-    case "Subscriptions":
+    case "subscriptions":
+    case "subscription":
       return <RefreshCw className="h-5 w-5 text-slate-500" />;
-    case "Groceries":
+    case "groceries":
       return <ShoppingCart className="h-5 w-5 text-slate-500" />;
-    case "Airtime & Data":
+    case "airtime & data":
+    case "airtime":
+    case "data":
       return <Smartphone className="h-5 w-5 text-slate-500" />;
-    case "Transfers":
+    case "transfers":
+    case "transfer":
+    case "rent":
+    case "investment":
       return <ArrowLeftRight className="h-5 w-5 text-slate-500" />;
-    case "POS & Cash":
+    case "pos & cash":
+    case "pos":
       return <CreditCard className="h-5 w-5 text-slate-500" />;
-    case "Betting":
+    case "betting":
       return <Trophy className="h-5 w-5 text-slate-500" />;
-    case "Bills & Utilities":
+    case "bills & utilities":
       return <Zap className="h-5 w-5 text-slate-500" />;
-    case "Entertainment":
+    case "entertainment":
       return <Tv className="h-5 w-5 text-slate-500" />;
-    case "Shopping":
+    case "shopping":
       return <ShoppingBag className="h-5 w-5 text-slate-500" />;
     default:
       return <HelpCircle className="h-5 w-5 text-slate-500" />;
@@ -85,7 +93,7 @@ export default function TransactionsView({
   editingTx: Transaction | null;
   setEditingTx: (tx: Transaction | null) => void;
 }) {
-  const { transactions, addTransaction, updateTransaction, deleteTransaction, resetToDefault } = useFinance();
+  const { transactions, addTransaction, updateTransaction, deleteTransaction, resetToDefault, categories } = useFinance();
   
   // Search & Filter state
   const [search, setSearch] = useState("");
@@ -97,24 +105,9 @@ export default function TransactionsView({
   const [formSubtitle, setFormSubtitle] = useState("");
   const [formType, setFormType] = useState<"income" | "expense">("expense");
   const [formAmount, setFormAmount] = useState("");
-  const [formCategory, setFormCategory] = useState("Other");
+  const [formCategory, setFormCategory] = useState("Others");
   const [formBank, setFormBank] = useState<Transaction["bank"]>("GTBANK");
   const [formDate, setFormDate] = useState("");
-
-  const categories = [
-    "Transport",
-    "Food & Dining",
-    "Groceries",
-    "Bills & Utilities",
-    "Airtime & Data",
-    "Subscriptions",
-    "Entertainment",
-    "Transfers",
-    "POS & Cash",
-    "Income",
-    "Shopping",
-    "Betting"
-  ];
 
   // Filtered transactions
   const filteredTxs = useMemo(() => {
@@ -189,7 +182,7 @@ export default function TransactionsView({
     setFormSubtitle("");
     setFormType("expense");
     setFormAmount("");
-    setFormCategory("Other");
+    setFormCategory("Others");
     setFormBank("GTBANK");
     // Default to current local date/time
     const now = new Date();
@@ -244,9 +237,9 @@ export default function TransactionsView({
   const handleCategoryChange = useCallback((cat: string) => {
     setFormCategory(cat);
     // Auto-update standard income category
-    if (cat === "Income") {
+    if (cat === "Income" || cat === "Salary") {
       setFormType("income");
-    } else if (formType === "income" && cat !== "Income") {
+    } else if (formType === "income" && cat !== "Income" && cat !== "Salary") {
       setFormType("expense");
     }
   }, [formType]);
@@ -514,20 +507,11 @@ export default function TransactionsView({
                       onChange={(e) => handleCategoryChange(e.target.value)}
                       className="w-full rounded-xl border border-slate-200 px-4 py-2.5 outline-none focus:border-kolo-green bg-white cursor-pointer"
                     >
-                      <option value="Income">Income</option>
-                      <option value="Transport">Transport</option>
-                      <option value="Food & Dining">Food & Dining</option>
-                      <option value="Groceries">Groceries</option>
-                      <option value="Bills & Utilities">Bills & Utilities</option>
-                      <option value="Airtime & Data">Airtime & Data</option>
-                      <option value="Subscriptions">Subscriptions</option>
-                      <option value="Entertainment">Entertainment</option>
-                      <option value="Transfers">Transfers</option>
-                      <option value="POS & Cash">POS & Cash</option>
-                      <option value="Shopping">Shopping</option>
-                      <option value="Betting">Betting</option>
-                      <option value="Health">Health & Wellness</option>
-                      <option value="Other">Other</option>
+                      {categories.map((cat) => (
+                        <option key={cat} value={cat}>
+                          {cat}
+                        </option>
+                      ))}
                     </select>
                   </div>
 
