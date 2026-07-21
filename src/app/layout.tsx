@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { AuthProvider } from "@/context/auth-context";
 import { ThemeProvider } from "@/context/theme-context";
 import { ToastProvider } from "@/context/toast-context";
+import { QueryProvider } from "@/providers/query-provider";
 import "./globals.css";
 
 const geistSans = { variable: "font-sans" };
@@ -23,11 +24,13 @@ export default function RootLayout({
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col">
-        <ThemeProvider>
-          <ToastProvider>
-            <AuthProvider>{children}</AuthProvider>
-          </ToastProvider>
-        </ThemeProvider>
+        <QueryProvider>
+          <ThemeProvider>
+            <ToastProvider>
+              <AuthProvider>{children}</AuthProvider>
+            </ToastProvider>
+          </ThemeProvider>
+        </QueryProvider>
       </body>
     </html>
   );

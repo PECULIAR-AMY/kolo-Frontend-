@@ -3,7 +3,13 @@
 import React, { createContext, useContext, useState, useEffect, useMemo } from "react";
 import { useToast } from "@/context/toast-context";
 import { useAuth } from "@/context/auth-context";
-import { getCategories } from "@/api/category";
+import { useCategoriesQuery } from "@/hooks/use-categories";
+import {
+  useTransactionsQuery,
+  useCreateTransactionMutation,
+  useUpdateTransactionMutation,
+  useDeleteTransactionMutation,
+} from "@/hooks/use-transactions";
 
 const DEFAULT_CATEGORIES = [
   "Food",
@@ -393,8 +399,22 @@ export function FinanceProvider({ children }: { children: React.ReactNode }) {
   const [activeTab, setActiveTab] = useState<TabType>("dashboard");
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [mounted, setMounted] = useState(false);
-  const [categories, setCategories] = useState<string[]>(DEFAULT_CATEGORIES);
   const { isAuthenticated } = useAuth();
+
+  // TanStack Query Hooks for Categories and Transactions
+  const { data: categoryData } = useCategoriesQuery();
+  const { data: backendTransactions } = useTransactionsQuery();
+  const createTxMutation = useCreateTransactionMutation();
+  const updateTxMutation = useUpdateTransactionMutation();
+  const deleteTxMutation = useDeleteTransactionMutation();
+
+  // Dynamic Categories powered by TanStack Query
+  const categories = useMemo(() => {
+    if (categoryData && categoryData.length > 0) {
+      return categoryData.map((c) => c.name);
+    }
+    return DEFAULT_CATEGORIES;
+  }, [categoryData]);
 
   useEffect(() => {
     const local = localStorage.getItem("kolo_transactions");
@@ -411,60 +431,78 @@ export function FinanceProvider({ children }: { children: React.ReactNode }) {
     setMounted(true);
   }, []);
 
-  useEffect(() => {
-    const fetchCategories = async () => {
-      try {
-        const response = await getCategories();
-        if (response.success && response.categories) {
-          setCategories(response.categories.map((c) => c.name));
-        }
-      } catch (err) {
-        console.error("Failed to fetch categories:", err);
-      }
-    };
-
-    if (isAuthenticated) {
-      fetchCategories();
-    } else {
-      setCategories(DEFAULT_CATEGORIES);
-    }
-  }, [isAuthenticated]);
-
   const toast = useToast();
 
-  const addTransaction = React.useCallback((t: Omit<Transaction, "id">) => {
-    const newT: Transaction = {
-      ...t,
-      id: "tx-" + Math.random().toString(36).substr(2, 9),
-    };
-    setTransactions((prev) => {
-      const next = [newT, ...prev];
-      localStorage.setItem("kolo_transactions", JSON.stringify(next));
-      return next;
-    });
-    toast.success(`Added transaction: ${t.title}`);
-  }, [toast]);
+  const addTransaction = React.useCallback(
+    (t: Omit<Transaction, "id">) => {
+      const newT: Transaction = {
+        ...t,
+        id: "tx-" + Math.random().toString(36).substr(2, 9),
+      };
+      setTransactions((prev) => {
+        const next = [newT, ...prev];
+        localStorage.setItem("kolo_transactions", JSON.stringify(next));
+        return next;
+      });
 
-  const updateTransaction = React.useCallback((id: string, updated: Omit<Transaction, "id">) => {
-    setTransactions((prev) => {
-      const next = prev.map((t) => (t.id === id ? { ...updated, id } : t));
-      localStorage.setItem("kolo_transactions", JSON.stringify(next));
-      return next;
-    });
-    toast.success(`Updated transaction: ${updated.title}`);
-  }, [toast]);
+      if (isAuthenticated) {
+        createTxMutation.mutate({
+          amount: t.amount,
+          transaction_type: t.type,
+          transaction_date: t.date,
+          description: t.title,
+        });
+      }
 
-  const deleteTransaction = React.useCallback((id: string) => {
-    let deletedTitle = "";
-    setTransactions((prev) => {
-      const target = prev.find((t) => t.id === id);
-      if (target) deletedTitle = target.title;
-      const next = prev.filter((t) => t.id !== id);
-      localStorage.setItem("kolo_transactions", JSON.stringify(next));
-      return next;
-    });
-    toast.warning(deletedTitle ? `Deleted transaction: ${deletedTitle}` : "Transaction deleted");
-  }, [toast]);
+      toast.success(`Added transaction: ${t.title}`);
+    },
+    [toast, isAuthenticated, createTxMutation]
+  );
+
+  const updateTransaction = React.useCallback(
+    (id: string, updated: Omit<Transaction, "id">) => {
+      setTransactions((prev) => {
+        const next = prev.map((t) => (t.id === id ? { ...updated, id } : t));
+        localStorage.setItem("kolo_transactions", JSON.stringify(next));
+        return next;
+      });
+
+      if (isAuthenticated && !id.startsWith("tx-")) {
+        updateTxMutation.mutate({
+          id,
+          payload: {
+            amount: updated.amount,
+            transaction_type: updated.type,
+            transaction_date: updated.date,
+            description: updated.title,
+          },
+        });
+      }
+
+      toast.success(`Updated transaction: ${updated.title}`);
+    },
+    [toast, isAuthenticated, updateTxMutation]
+  );
+
+  const deleteTransaction = React.useCallback(
+    (id: string) => {
+      let deletedTitle = "";
+      setTransactions((prev) => {
+        const target = prev.find((t) => t.id === id);
+        if (target) deletedTitle = target.title;
+        const next = prev.filter((t) => t.id !== id);
+        localStorage.setItem("kolo_transactions", JSON.stringify(next));
+        return next;
+      });
+
+      if (isAuthenticated && !id.startsWith("tx-")) {
+        deleteTxMutation.mutate(id);
+      }
+
+      toast.warning(deletedTitle ? `Deleted transaction: ${deletedTitle}` : "Transaction deleted");
+    },
+    [toast, isAuthenticated, deleteTxMutation]
+  );
 
   const importTransactions = React.useCallback((newTs: Omit<Transaction, "id">[]) => {
     const prepared = newTs.map((t) => ({
