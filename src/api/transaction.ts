@@ -71,3 +71,10 @@ export const deleteTransactionApi = async (
   const response = await api.delete(`/transactions/${id}`);
   return response.data;
 };
+
+export const getTransactionByIdApi = async (
+  id: string
+): Promise<{ success: boolean; data: BackendTransaction }> => {
+  const response = await api.get(`/transactions/${id}`);
+  return response.data;
+};
